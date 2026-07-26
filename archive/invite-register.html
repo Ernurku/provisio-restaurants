@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация сотрудника | Provisio</title>
+    <meta name="description" content="Регистрация по приглашению — присоединяйтесь к команде в Provisio.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="auth-layout">
+        <!-- Left Side — Visual -->
+        <div class="auth-visual">
+            <div class="auth-visual-overlay"></div>
+            <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=1200" alt="Шеф-повар за работой" class="auth-visual-image">
+            <div class="auth-visual-content">
+                <a href="index.html" class="logo auth-logo">Provisio<span class="logo-dot">.</span></a>
+                <div class="auth-features-list">
+                    <div class="auth-feature-item">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Вас пригласили в команду</span>
+                    </div>
+                    <div class="auth-feature-item">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Заполните данные для регистрации</span>
+                    </div>
+                    <div class="auth-feature-item">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Начните работать вместе с командой</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side — Form -->
+        <div class="auth-form-side">
+            <div class="auth-form-container">
+                <div class="auth-form-header">
+                    <a href="index.html" class="logo auth-form-logo">Provisio<span class="logo-dot">.</span></a>
+                    <h1>Регистрация сотрудника</h1>
+                    <p id="inviteInfo">Заполните данные, чтобы присоединиться к команде</p>
+                </div>
+
+                <form id="inviteRegisterForm" class="auth-form" novalidate>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="inv-name">Имя *</label>
+                            <div class="input-wrapper">
+                                <i class="ph ph-user"></i>
+                                <input type="text" id="inv-name" name="name" placeholder="Иван" required autocomplete="given-name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inv-lastname">Фамилия *</label>
+                            <div class="input-wrapper">
+                                <i class="ph ph-user"></i>
+                                <input type="text" id="inv-lastname" name="lastname" placeholder="Петров" required autocomplete="family-name">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inv-email">Email *</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-envelope"></i>
+                            <input type="email" id="inv-email" name="email" placeholder="ivan@example.com" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inv-password">Пароль *</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-lock"></i>
+                            <input type="password" id="inv-password" name="password" placeholder="Минимум 8 символов" required minlength="8" autocomplete="new-password">
+                            <button type="button" class="password-toggle" aria-label="Показать пароль">
+                                <i class="ph ph-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="inv-terms" name="terms" required>
+                            <span class="checkbox-custom"></span>
+                            Я согласен с <a href="terms.html" target="_blank">условиями</a> и <a href="privacy.html" target="_blank">политикой конфиденциальности</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-accent btn-lg auth-submit" id="inviteRegisterSubmit">
+                        <span>Присоединиться к команде</span>
+                        <i class="ph ph-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get invite token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteToken = urlParams.get('token');
+        
+        if (inviteToken) {
+            document.getElementById('inviteInfo').textContent = 
+                'Заполните данные, чтобы присоединиться к команде. Ваш инвайт-код: ' + inviteToken.slice(0, 8) + '...';
+        }
+
+        // Password visibility toggle
+        document.querySelectorAll('.password-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = btn.parentElement.querySelector('input');
+                const icon = btn.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'ph ph-eye-slash';
+                } else {
+                    input.type = 'password';
+                    icon.className = 'ph ph-eye';
+                }
+            });
+        });
+
+        // Form submit handler — connected to n8n + Supabase
+        const API_BASE = 'https://n8n.shopluminova.online/webhook';
+
+        document.getElementById('inviteRegisterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('inviteRegisterSubmit');
+            const formData = {
+                name: document.getElementById('inv-name').value.trim(),
+                lastname: document.getElementById('inv-lastname').value.trim(),
+                email: document.getElementById('inv-email').value.trim(),
+                password: document.getElementById('inv-password').value,
+                invite_token: inviteToken
+            };
+
+            // Validation
+            if (!formData.name || !formData.lastname || !formData.email || !formData.password) {
+                alert('Заполните все обязательные поля');
+                return;
+            }
+            if (!formData.invite_token) {
+                alert('Ошибка: отсутствует инвайт-токен. Проверьте ссылку приглашения.');
+                return;
+            }
+            if (formData.password.length < 8) {
+                alert('Пароль должен быть не менее 8 символов');
+                return;
+            }
+            if (!document.getElementById('inv-terms').checked) {
+                alert('Необходимо принять условия использования');
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.querySelector('span').textContent = 'Регистрация...';
+
+                const res = await fetch(`${API_BASE}/v2/team`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'accept-invite', ...formData })
+                });
+
+                const text = await res.text();
+                const result = text ? JSON.parse(text) : {};
+
+                if (!res.ok || result.error || !result.success) {
+                    let srvError = result.error || result.message || '';
+                    if (res.status === 409 || srvError.toLowerCase().includes('duplicate') || srvError.toLowerCase().includes('already exist')) {
+                        throw new Error('Пользователь с таким Email уже зарегистрирован. Пожалуйста, войдите в аккаунт.');
+                    }
+                    throw new Error(srvError || 'Ошибка регистрации');
+                }
+
+                localStorage.setItem('auth_session', 'true');
+                if (result.auth_token) localStorage.setItem('auth_token', result.auth_token);
+                localStorage.setItem('user_email', formData.email);
+                localStorage.setItem('user_name', formData.name);
+
+                alert('Регистрация успешна! Перенаправление в панель управления...');
+                window.location.href = 'admin.html';
+            } catch (err) {
+                console.error('Invite registration error:', err);
+                
+                let errorMsg = err.message;
+                if (errorMsg === 'Failed to fetch' || errorMsg.includes('NetworkError') || errorMsg.includes('Failed to execute')) {
+                    errorMsg = 'Ошибка связи с сервером. Повторите попытку позже.';
+                }
+                
+                alert('Ошибка: ' + errorMsg);
+                submitBtn.disabled = false;
+                submitBtn.querySelector('span').textContent = 'Присоединиться к команде';
+            }
+        });
+    </script>
+</body>
+</html>

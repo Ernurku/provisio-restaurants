@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Цены | Provisio</title>
+    <meta name="description" content="Гибкие тарифные планы Provisio для ресторанов разного масштаба. 7 дней бесплатно.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="glass-nav" id="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <a href="index.html" class="logo">Provisio<span class="logo-dot">.</span></a>
+                <nav class="main-nav">
+                    <a href="index.html#features">Возможности</a>
+                    <a href="pricing.html">Цены</a>
+                    <a href="index.html#stories">Истории клиентов</a>
+                    <a href="docs.html">Документация</a>
+                </nav>
+            </div>
+            <div class="header-right">
+                <a href="login.html" class="nav-link-login">Войти</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Попробовать бесплатно</a>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Меню"><i class="ph ph-list"></i></button>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="index.html#features">Возможности</a>
+            <a href="pricing.html">Цены</a>
+            <a href="index.html#stories">Истории клиентов</a>
+            <a href="docs.html">Документация</a>
+            <div class="mobile-menu-actions">
+                <a href="login.html" class="nav-link-login">Войти</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Попробовать бесплатно</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="page-hero">
+        <div class="container">
+            <div class="breadcrumbs">
+                <a href="index.html">Главная</a>
+                <span class="separator">/</span>
+                <span>Цены</span>
+            </div>
+            <h1>Простое и прозрачное ценообразование</h1>
+            <p>Выберите план, который подходит вашему ресторану. Все планы включают 7 дней бесплатного пробного периода.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <!-- Toggle -->
+            <div class="pricing-toggle">
+                <span>Ежемесячно</span>
+                <div class="toggle-switch" id="pricingToggle"></div>
+                <span>Ежегодно</span>
+                <span class="toggle-badge">−20%</span>
+            </div>
+
+            <div class="pricing-grid">
+
+                <!-- Starter -->
+                <div class="pricing-card">
+                    <span class="pricing-plan">Стартовый</span>
+                    <h3>Для небольших кафе</h3>
+                    <div class="pricing-price">
+                        <span class="pricing-amount" data-monthly="$65" data-annual="$52">$65</span>
+                        <span class="pricing-period">/ мес</span>
+                    </div>
+                    <p class="pricing-description">Идеально для кафе с одной точкой и командой до 3 человек.</p>
+                    <div class="pricing-features">
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> До 50 рецептов</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> 1 филиал</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> 3 пользователя</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Калькуляция себестоимости</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Пищевая ценность (БЖУ)</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Экспорт PDF</div>
+                    </div>
+                    <a href="register.html" class="btn btn-outline btn-md">Начать бесплатно</a>
+                </div>
+
+                <!-- Pro -->
+                <div class="pricing-card pricing-card-popular">
+                    <span class="pricing-plan">Профессиональный</span>
+                    <h3>Для ресторанов с несколькими филиалами</h3>
+                    <div class="pricing-price">
+                        <span class="pricing-amount" data-monthly="$160" data-annual="$128">$160</span>
+                        <span class="pricing-period">/ мес</span>
+                    </div>
+                    <div class="pricing-savings-badge" id="savingsBadge" style="display:none;">
+                        <i class="ph ph-piggy-bank"></i> Экономия $384 в год
+                    </div>
+                    <p class="pricing-description">Полный функционал для ресторана с несколькими точками.</p>
+                    <div class="pricing-features">
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Неограниченные рецепты</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> До 10 филиалов</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> 12 пользователей</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Всё из «Стартового»</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Инвентаризация и склад</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> 40+ нутриентов</div>
+                    </div>
+                    <a href="register.html" class="btn btn-accent btn-md">Начать бесплатно</a>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="pricing-card">
+                    <span class="pricing-plan">Холдинг</span>
+                    <h3>Индивидуальный</h3>
+                    <div class="pricing-price">
+                        <span class="pricing-amount" data-monthly="Индивидуально" data-annual="Индивидуально">Индивидуально</span>
+                        <span class="pricing-period"></span>
+                    </div>
+                    <p class="pricing-description">Индивидуальное решение для крупных ресторанных холдингов.</p>
+                    <div class="pricing-features">
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Всё из «Профессионального»</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Неограниченные филиалы</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Договорное количество пользователей</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Выделенный менеджер</div>
+                        <div class="pricing-feature"><i class="ph ph-check-circle"></i> Кастомные интеграции</div>
+                    </div>
+                    <a href="#" class="btn btn-outline btn-md">Связаться с нами</a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section bg-cream-dark">
+        <div class="container">
+            <div class="section-header">
+                <h2>Часто задаваемые вопросы</h2>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Можно ли попробовать бесплатно? <i class="ph ph-caret-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Да! Все тарифные планы включают 7 дней бесплатного пробного периода. Кредитная карта не требуется. По истечении пробного периода вы можете выбрать подходящий план или продолжить использовать ограниченную бесплатную версию.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Можно ли менять тариф? <i class="ph ph-caret-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Конечно. Вы можете перейти на более высокий или низкий тариф в любое время. При повышении тарифа доплата рассчитывается пропорционально оставшемуся периоду. При понижении — баланс переносится на следующий период.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Как работает оплата? <i class="ph ph-caret-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Мы принимаем банковские карты (Visa, Mastercard, МИР), Apple Pay и Google Pay. Для тарифа «Холдинг» также доступна оплата по счёту для юридических лиц.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Есть ли скидки для образовательных учреждений? <i class="ph ph-caret-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Да, мы предлагаем специальные условия для кулинарных школ, колледжей и университетов. Свяжитесь с нами для получения индивидуального предложения.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Что произойдет с моими данными, если я отменю подписку? <i class="ph ph-caret-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Ваши данные сохраняются в течение 90 дней после отмены подписки. В любой момент вы можете экспортировать все рецепты, техкарты и отчёты в формате PDF или CSV.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section cta-section">
+        <div class="container text-center">
+            <h2>Готовы начать?</h2>
+            <p class="section-subtitle">7 дней бесплатно. Без кредитной карты. Без обязательств.</p>
+            <div class="cta-actions">
+                <a href="register.html" class="btn btn-accent btn-lg">Попробовать бесплатно</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">Provisio<span class="logo-dot">.</span></a>
+                    <p>Эстетичный цифровой су-шеф для тех, кто относится к еде как к искусству.</p>
+                    <div class="social-links"><a href="#" aria-label="Telegram"><i class="ph ph-telegram-logo"></i></a></div>
+                </div>
+                <div class="footer-col"><h4>Продукт</h4><ul><li><a href="index.html#features">Возможности</a></li><li><a href="pricing.html">Ценообразование</a></li><li><a href="security.html">Безопасность</a></li></ul></div>
+                <div class="footer-col"><h4>Ресурсы</h4><ul><li><a href="docs.html">Документация</a></li><li><a href="blog.html">Блог шефа</a></li></ul></div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Provisio Inc. Все права защищены.</p>
+                <div class="footer-bottom-links"><a href="privacy.html">Политика конфиденциальности</a><a href="terms.html">Условия использования</a></div>
+            </div>
+        </div>
+    </footer>
+    <script src="main.js"></script>
+</body>
+</html>

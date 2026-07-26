@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Войти | Provisio</title>
+    <meta name="description" content="Войдите в свой аккаунт Provisio для управления рецептами и кухней.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/i18n.js?v=1"></script>
+    <style>
+        /* Language switcher (login page) */
+        .login-lang-switcher { position: fixed; top: 18px; right: 20px; z-index: 60; }
+        .login-lang-switcher select {
+            appearance: none; -webkit-appearance: none;
+            border: 1px solid rgba(0,0,0,0.12);
+            background: rgba(255,255,255,0.9);
+            color: #2b2b2b;
+            border-radius: 10px;
+            padding: 8px 30px 8px 12px;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            font-family: inherit;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Language switcher (pre-login: choice remembered in browser only) -->
+    <div class="login-lang-switcher" data-no-i18n>
+        <select id="loginLangSelect" aria-label="Язык / Language">
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+            <option value="el">Ελληνικά</option>
+        </select>
+    </div>
+
+    <div class="auth-layout">
+        <!-- Left Side — Visual -->
+        <div class="auth-visual">
+            <div class="auth-visual-overlay"></div>
+            <img src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&q=80&w=1200" alt="Ресторанная кухня" class="auth-visual-image">
+            <div class="auth-visual-content">
+                <a href="index.html" class="logo auth-logo">Provisio<span class="logo-dot">.</span></a>
+                <blockquote class="auth-quote">
+                    <p>«Provisio изменил наш подход к калькуляции. Теперь каждый грамм на учёте, а фудкост снизился на 12%.»</p>
+                    <cite>— Марк Левин, шеф-повар «Bistro Blanc»</cite>
+                </blockquote>
+            </div>
+        </div>
+
+        <!-- Right Side — Form -->
+        <div class="auth-form-side">
+            <div class="auth-form-container">
+                <div class="auth-form-header">
+                    <a href="index.html" class="logo auth-form-logo">Provisio<span class="logo-dot">.</span></a>
+                    <h1>Добро пожаловать</h1>
+                    <p>Войдите в свой аккаунт, чтобы продолжить</p>
+                </div>
+
+                <form id="loginForm" class="auth-form" novalidate>
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-envelope"></i>
+                            <input type="email" id="login-email" name="email" placeholder="chef@restaurant.com" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">
+                            Пароль
+                            <a href="#" class="form-link-inline">Забыли пароль?</a>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-lock"></i>
+                            <input type="password" id="login-password" name="password" placeholder="Введите пароль" required autocomplete="current-password">
+                            <button type="button" class="password-toggle" aria-label="Показать пароль">
+                                <i class="ph ph-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="login-remember" name="remember">
+                            <span class="checkbox-custom"></span>
+                            Запомнить меня
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-accent btn-lg auth-submit" id="loginSubmit">
+                        <span>Войти</span>
+                        <i class="ph ph-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="auth-divider">
+                    <span>или</span>
+                </div>
+
+                <div id="googleBtnContainer" class="auth-social-container google-overlay-wrapper">
+                    <!-- The visible custom button (animated via parent hover) -->
+                    <div class="btn btn-lg btn-google auth-social-btn custom-google-ui">
+                        <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google Logo">
+                        <span>Продолжить с Google</span>
+                    </div>
+                    <!-- The invisible real Google button on top (Hitbox) -->
+                    <div id="g_id_signin" class="real-google-btn"></div>
+                </div>
+
+                <p class="auth-switch">
+                    Нет аккаунта? <a href="register.html">Зарегистрироваться</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal-overlay" id="authModalOverlay"></div>
+    <div class="modal modal-sm" id="forgotPasswordModal">
+        <div class="modal-header">
+            <h3>Восстановление пароля</h3>
+            <button class="modal-close" id="forgotModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 16px; color: var(--text-muted); font-size: 14px;">Введите email, который вы использовали при регистрации, и мы отправим вам ссылку для сброса пароля.</p>
+            <div class="form-group">
+                <label>Email</label>
+                <div class="input-wrapper">
+                    <i class="ph ph-envelope"></i>
+                    <input type="email" id="forgot-email" class="admin-input" placeholder="chef@restaurant.com">
+                </div>
+            </div>
+            <div id="forgot-msg" style="margin-top: 8px; font-size: 14px;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="forgotModalCancel">Отмена</button>
+            <button class="btn btn-accent btn-sm" id="forgotModalSend">Отправить ссылку</button>
+        </div>
+    </div>
+
+    <!-- Google Onboarding Modal -->
+    <div class="modal-overlay" id="googleOnboardOverlay"></div>
+    <div class="modal modal-sm" id="googleOnboardModal">
+        <div class="modal-header">
+            <h3><i class="ph ph-google-logo" style="color: #4285F4;"></i> Добро пожаловать!</h3>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 16px; color: var(--text-muted); font-size: 14px;">Вы вошли через Google. Расскажите немного о вашем заведении, чтобы мы настроили всё для вас.</p>
+            <div class="form-group">
+                <label for="onboard-venue">Название заведения</label>
+                <div class="input-wrapper">
+                    <i class="ph ph-storefront"></i>
+                    <input type="text" id="onboard-venue" placeholder="Bistro Blanc" required>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+                <label for="onboard-type">Тип заведения</label>
+                <div class="input-wrapper input-wrapper-select">
+                    <i class="ph ph-cooking-pot"></i>
+                    <select id="onboard-type" required>
+                        <option value="" disabled selected>Выберите тип</option>
+                        <option value="restaurant">Ресторан</option>
+                        <option value="cafe">Кафе</option>
+                        <option value="bakery">Пекарня</option>
+                        <option value="bar">Бар</option>
+                        <option value="canteen">Столовая</option>
+                        <option value="catering">Кейтеринг</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+            </div>
+            <div id="onboard-msg" style="margin-top: 8px; font-size: 14px;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-accent btn-sm" id="onboardSubmit" style="width: 100%;">Начать работу <i class="ph ph-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ===== Language (pre-login): remembered in localStorage only, applied to this page =====
+        (function () {
+            var sel = document.getElementById('loginLangSelect');
+            var stored = 'ru';
+            try { stored = localStorage.getItem('provisio_lang') || 'ru'; } catch (e) {}
+            if (sel) sel.value = stored;
+            if (window.ProvisioI18n) window.ProvisioI18n.setLanguage(stored);
+            sel && sel.addEventListener('change', function () {
+                var lang = sel.value;
+                try { localStorage.setItem('provisio_lang', lang); } catch (e) {}
+                if (window.ProvisioI18n) window.ProvisioI18n.setLanguage(lang);
+            });
+        })();
+
+        // Toast logic for login/register pages
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            const icons = { success:'ph-check-circle', error:'ph-x-circle', info:'ph-info' };
+            toast.innerHTML = `<i class="ph ${icons[type] || icons.info}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        // Password visibility toggle
+        document.querySelectorAll('.password-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = btn.parentElement.querySelector('input');
+                const icon = btn.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'ph ph-eye-slash';
+                } else {
+                    input.type = 'password';
+                    icon.className = 'ph ph-eye';
+                }
+            });
+        });
+
+        // Form submit handler — Connected to n8n + Supabase
+        const API_BASE = 'https://n8n.shopluminova.online/webhook';
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const remember = document.getElementById('login-remember').checked;
+            const submitBtn = document.getElementById('loginSubmit');
+
+            // 1. Strict validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                showToast('Пожалуйста, введите корректный Email.', 'error');
+                return;
+            }
+            if (!password) {
+                showToast('Пожалуйста, введите пароль. Пустой пароль недопустим.', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="ph ph-circle-notch" style="animation: spin 1s linear infinite;"></i> Выполняем вход...';
+
+            try {
+                // Supabase API authentication
+                const { data, error } = await window.supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    throw new Error(error.message === 'Invalid login credentials' ? 'Неверный email или пароль.' : error.message);
+                }
+
+                // Create session
+                localStorage.setItem('auth_session', 'true');
+                localStorage.setItem('auth_token', data.session.access_token);
+                localStorage.setItem('user_email', data.user.email);
+
+                // Fetch user profile data
+                const { data: profile } = await window.supabase
+                    .from('users')
+                    .select('full_name, role, venue_name')
+                    .eq('id', data.user.id)
+                    .single();
+
+                if (profile) {
+                    localStorage.setItem('user_name', profile.full_name || email.split('@')[0]);
+                    localStorage.setItem('user_role', profile.role || 'owner');
+                    if (profile.venue_name) localStorage.setItem('user_restaurant', profile.venue_name);
+                } else {
+                    localStorage.setItem('user_name', email.split('@')[0]);
+                    localStorage.setItem('user_role', 'owner');
+                }
+
+                showToast('Вход успешен! Добро пожаловать.', 'success');
+                setTimeout(() => window.location.href = 'admin.html', 600);
+
+            } catch (err) {
+                console.error('Login error:', err);
+                
+                let errorMsg = err.message;
+                if (errorMsg === 'Failed to fetch' || errorMsg.includes('NetworkError') || errorMsg.includes('Failed to execute')) {
+                    errorMsg = 'Ошибка связи с сервером. Повторите попытку позже.';
+                }
+
+                showToast(errorMsg || 'Ошибка подключения к серверу', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Войти</span><i class="ph ph-arrow-right"></i>';
+            }
+        });
+
+        // Google OAuth Logic (Improved Transparent Overlay)
+        const GOOGLE_CLIENT_ID = "574358561229-rnhssm32aoad640uti02cf6idh8ac0bm.apps.googleusercontent.com";
+
+        window.onload = function () {
+            if (window.google) {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+                
+                // Render the real button into the invisible container
+                google.accounts.id.renderButton(
+                    document.getElementById("g_id_signin"),
+                    { 
+                        theme: "outline", 
+                        size: "large", 
+                        width: "400", 
+                        text: "continue_with",
+                        shape: "pill" // Using pill as a hint, though overlay handles rounding
+                    }
+                );
+            }
+        };
+
+        // Store Google user data temporarily for the onboarding modal
+        var _googleUserData = null;
+
+        async function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+            
+            showToast('Авторизация через Google...', 'info');
+            
+            try {
+                const { data, error } = await window.supabase.auth.signInWithIdToken({
+                    provider: 'google',
+                    token: response.credential,
+                });
+                
+                if (error) throw new Error(error.message);
+
+                // Save session
+                localStorage.setItem('auth_session', 'true');
+                localStorage.setItem('auth_token', data.session.access_token);
+                localStorage.setItem('user_email', data.user.email);
+                
+                const { data: profile } = await window.supabase
+                    .from('users')
+                    .select('full_name, role, venue_name, venue_type, avatar_url')
+                    .eq('id', data.user.id)
+                    .single();
+                    
+                if (profile) {
+                    localStorage.setItem('user_name', profile.full_name || data.user.user_metadata.full_name || data.user.email.split('@')[0]);
+                    localStorage.setItem('user_avatar', profile.avatar_url || data.user.user_metadata.avatar_url || '');
+                    localStorage.setItem('user_role', profile.role || 'owner');
+                }
+
+                // Check if this is a first-time Google user (no venue set)
+                if (!profile || !profile.venue_name || profile.venue_name.trim() === '') {
+                    // First time — show onboarding modal
+                    _googleUserData = { userId: data.user.id, profile, user: data.user };
+                    document.getElementById('googleOnboardOverlay').classList.add('active');
+                    document.getElementById('googleOnboardModal').classList.add('active');
+                } else {
+                    // Returning user — redirect immediately
+                    localStorage.setItem('user_restaurant', profile.venue_name);
+                    showToast('С возвращением! Добро пожаловать.', 'success');
+                    setTimeout(() => window.location.href = 'admin.html', 600);
+                }
+                
+            } catch (err) {
+                console.error('Google Auth technical error:', err);
+                showToast('Не удалось войти в аккаунт.', 'error');
+            }
+        }
+
+        // Google Onboarding Modal — Submit handler
+        document.getElementById('onboardSubmit').addEventListener('click', async () => {
+            const venueName = document.getElementById('onboard-venue').value.trim();
+            const venueType = document.getElementById('onboard-type').value;
+            const msgBox = document.getElementById('onboard-msg');
+            const btn = document.getElementById('onboardSubmit');
+
+            if (!venueName) {
+                msgBox.style.color = '#e74c3c';
+                msgBox.textContent = 'Пожалуйста, введите название заведения.';
+                return;
+            }
+            if (!venueType) {
+                msgBox.style.color = '#e74c3c';
+                msgBox.textContent = 'Пожалуйста, выберите тип заведения.';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-circle-notch" style="animation: spin 1s linear infinite;"></i> Сохранение...';
+
+            try {
+                // Update the user profile in Supabase
+                await window.supabase.from('users').update({
+                    venue_name: venueName,
+                    venue_type: venueType
+                }).eq('id', _googleUserData.userId);
+
+                // Also create/update user_settings
+                await window.supabase.from('user_settings').upsert({
+                    user_id: _googleUserData.userId,
+                    venue_name: venueName,
+                    venue_type: venueType
+                }, { onConflict: 'user_id' });
+
+                localStorage.setItem('user_restaurant', venueName);
+
+                showToast('Отлично! Добро пожаловать в Provisio.', 'success');
+                setTimeout(() => window.location.href = 'admin.html', 600);
+            } catch (err) {
+                console.error('Onboard save error:', err);
+                msgBox.style.color = '#e74c3c';
+                msgBox.textContent = 'Ошибка сохранения. Попробуйте ещё раз.';
+                btn.disabled = false;
+                btn.innerHTML = 'Начать работу <i class="ph ph-arrow-right"></i>';
+            }
+        });
+
+        // Forgot Password Logic
+        const forgotModal = document.getElementById('forgotPasswordModal');
+        const overlay = document.getElementById('authModalOverlay');
+        const openForgotBtn = document.querySelector('.form-link-inline');
+        
+        function closeForgotModal() {
+            forgotModal.classList.remove('active');
+            overlay.classList.remove('active');
+            document.getElementById('forgot-msg').textContent = '';
+            document.getElementById('forgot-email').value = '';
+        }
+
+        openForgotBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            forgotModal.classList.add('active');
+            overlay.classList.add('active');
+        });
+
+        document.getElementById('forgotModalClose').addEventListener('click', closeForgotModal);
+        document.getElementById('forgotModalCancel').addEventListener('click', closeForgotModal);
+        overlay.addEventListener('click', closeForgotModal);
+
+        document.getElementById('forgotModalSend').addEventListener('click', async (e) => {
+            const btn = e.target;
+            if (btn.disabled) return;
+            const email = document.getElementById('forgot-email').value.trim();
+            const msgBox = document.getElementById('forgot-msg');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                msgBox.textContent = 'Пожалуйста, введите корректный email.';
+                msgBox.style.color = '#e74c3c';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-circle-notch" style="animation: spin 1s linear infinite;"></i> Выполнение...';
+            msgBox.style.color = 'var(--text-muted)';
+            msgBox.textContent = 'Отправка...';
+            
+            const { error } = await window.supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/reset-password.html',
+            });
+
+            if (error) {
+                msgBox.style.color = '#e74c3c';
+                msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Ошибка: ' + error.message;
+                btn.disabled = false;
+                btn.innerHTML = 'Отправить ссылку';
+                return;
+            }
+
+            msgBox.style.color = '#27ae60';
+            msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Инструкции отправлены на ваш email.';
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = 'Отправить ссылку';
+                closeForgotModal();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

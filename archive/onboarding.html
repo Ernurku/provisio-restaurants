@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Завершение регистрации | Provisio</title>
+    <meta name="description" content="Расскажите немного о себе, чтобы мы могли настроить Provisio под ваши задачи.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="auth-layout">
+        <!-- Left Side — Visual -->
+        <div class="auth-visual">
+            <div class="auth-visual-overlay"></div>
+            <img src="https://images.unsplash.com/photo-1556910110-a5a63dfd393c?auto=format&fit=crop&q=80&w=1200" alt="Настройка профиля" class="auth-visual-image">
+            <div class="auth-visual-content">
+                <a href="index.html" class="logo auth-logo">Provisio<span class="logo-dot">.</span></a>
+                <div class="auth-features-list">
+                    <div class="auth-feature-item">
+                        <i class="ph ph-sparkle"></i>
+                        <span>Рады вас видеть! Осталось всего пара шагов.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side — Onboarding Form -->
+        <div class="auth-form-side">
+            <div class="auth-form-container">
+                <div class="auth-form-header">
+                    <a href="index.html" class="logo auth-form-logo">Provisio<span class="logo-dot">.</span></a>
+                    <h1>Давайте познакомимся</h1>
+                    <p>Расскажите немного о себе, чтобы настроить рабочее пространство</p>
+                </div>
+
+                <form id="onboardingForm" class="auth-form" novalidate>
+                    <div class="form-group">
+                        <label for="onboard-name">Ваше имя</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-user"></i>
+                            <input type="text" id="onboard-name" name="name" placeholder="Напр: Александр" required autocomplete="name">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="onboard-role">Ваша профессия</label>
+                        <div class="input-wrapper input-wrapper-select">
+                            <i class="ph ph-briefcase"></i>
+                            <select id="onboard-role" name="role" required>
+                                <option value="" disabled selected>Выберите должность</option>
+                                <option value="chef">Шеф-повар</option>
+                                <option value="souschef">Су-шеф</option>
+                                <option value="manager">Управляющий</option>
+                                <option value="owner">Владелец</option>
+                                <option value="cook">Повар</option>
+                                <option value="accountant">Бухгалтер</option>
+                                <option value="other">Другое</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="otherRoleGroup" style="display: none;">
+                        <label for="onboard-role-other">Уточните должность</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-pencil"></i>
+                            <input type="text" id="onboard-role-other" placeholder="Напр: Кондитер">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-accent btn-lg auth-submit" id="onboardSubmit">
+                        <span>Начать работу</span>
+                        <i class="ph ph-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const API_BASE = 'https://n8n.shopluminova.online/webhook';
+        const userEmail = localStorage.getItem('onboarding_email');
+
+        if (!userEmail) {
+            window.location.href = 'login.html';
+        }
+
+        // Handle "Other" role display
+        document.getElementById('onboard-role').addEventListener('change', (e) => {
+            const otherGroup = document.getElementById('otherRoleGroup');
+            otherGroup.style.display = e.target.value === 'other' ? 'block' : 'none';
+        });
+
+        // Toast logic
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            const icons = { success:'ph-check-circle', error:'ph-x-circle', info:'ph-info' };
+            toast.innerHTML = `<i class="ph ${icons[type] || icons.info}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('onboard-name').value.trim();
+            const roleSelect = document.getElementById('onboard-role').value;
+            const roleOther = document.getElementById('onboard-role-other').value.trim();
+            const role = roleSelect === 'other' ? roleOther : roleSelect;
+            const submitBtn = document.getElementById('onboardSubmit');
+
+            if (!name || !role) {
+                showToast('Пожалуйста, заполните все поля.', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="ph ph-circle-notch" style="animation: spin 1s linear infinite;"></i> Сохраняем...';
+
+            try {
+                const res = await fetch(`${API_BASE}/v2/auth/onboarding`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, name, role })
+                });
+
+                const text = await res.text();
+                const result = text ? JSON.parse(text) : {};
+
+                if (!res.ok) throw new Error(result.error || 'Ошибка при сохранении данных.');
+
+                localStorage.setItem('auth_session', 'true');
+                if (result.auth_token) localStorage.setItem('auth_token', result.auth_token);
+                localStorage.setItem('user_name', name);
+                localStorage.setItem('user_role', role);
+                localStorage.setItem('user_email', userEmail);
+                localStorage.removeItem('onboarding_email');
+
+                showToast('Добро пожаловать в Provisio!', 'success');
+                setTimeout(() => window.location.href = 'admin.html', 800);
+
+            } catch (err) {
+                console.warn('API Error:', err);
+                
+                let errorMsg = err.message;
+                if (errorMsg === 'Failed to fetch' || errorMsg.includes('NetworkError') || errorMsg.includes('Failed to execute')) {
+                    errorMsg = 'Ошибка связи с сервером. Повторите попытку позже.';
+                }
+                
+                showToast(errorMsg || 'Ошибка сохранения данных. Попробуйте позже.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Начать работу</span><i class="ph ph-arrow-right"></i>';
+            }
+        });
+    </script>
+</body>
+</html>

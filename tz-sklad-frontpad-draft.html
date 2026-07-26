@@ -1,0 +1,312 @@
+<title>ТЗ: Склад + Frontpad — Provisio</title>
+
+<style>
+:root{
+  --bg:#efece3;
+  --surface:#ffffff;
+  --surface-2:#e6e2d5;
+  --ink:#2a2822;
+  --ink-muted:#6b6858;
+  --rule:#d9d4c4;
+  --accent:#5f6f42;
+  --accent-ink:#3d4a2a;
+  --accent-soft:#e2e6d5;
+  --risk:#a9701f;
+  --risk-soft:#f5e6cf;
+  --risk-ink:#5c4110;
+  --scope-out:#9a4638;
+  --scope-out-soft:#f3e0db;
+  --scope-out-ink:#5e281f;
+  --ok:#3f7156;
+  --ok-soft:#e0ebe3;
+  --code-bg:#e9e5d6;
+  --shadow: 0 1px 2px rgba(40,38,30,0.06), 0 8px 24px rgba(40,38,30,0.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1b1a16;
+    --surface:#242219;
+    --surface-2:#2c2a1f;
+    --ink:#eae6d9;
+    --ink-muted:#a8a493;
+    --rule:#3a3729;
+    --accent:#9db177;
+    --accent-ink:#c3d4a3;
+    --accent-soft:#2e3623;
+    --risk:#d7a75c;
+    --risk-soft:#3a2f18;
+    --risk-ink:#f0d19d;
+    --scope-out:#d18b7c;
+    --scope-out-soft:#3a2420;
+    --scope-out-ink:#f0c1b5;
+    --ok:#8bbb9d;
+    --ok-soft:#22301f;
+    --code-bg:#2c2a1f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1b1a16; --surface:#242219; --surface-2:#2c2a1f; --ink:#eae6d9; --ink-muted:#a8a493;
+  --rule:#3a3729; --accent:#9db177; --accent-ink:#c3d4a3; --accent-soft:#2e3623;
+  --risk:#d7a75c; --risk-soft:#3a2f18; --risk-ink:#f0d19d;
+  --scope-out:#d18b7c; --scope-out-soft:#3a2420; --scope-out-ink:#f0c1b5;
+  --ok:#8bbb9d; --ok-soft:#22301f; --code-bg:#2c2a1f;
+}
+:root[data-theme="light"]{
+  --bg:#efece3; --surface:#ffffff; --surface-2:#e6e2d5; --ink:#2a2822; --ink-muted:#6b6858;
+  --rule:#d9d4c4; --accent:#5f6f42; --accent-ink:#3d4a2a; --accent-soft:#e2e6d5;
+  --risk:#a9701f; --risk-soft:#f5e6cf; --risk-ink:#5c4110;
+  --scope-out:#9a4638; --scope-out-soft:#f3e0db; --scope-out-ink:#5e281f;
+  --ok:#3f7156; --ok-soft:#e0ebe3; --code-bg:#e9e5d6;
+}
+
+*{box-sizing:border-box;}
+body{background:var(--bg);}
+.doc{
+  max-width:760px;
+  margin:0 auto;
+  padding:56px 24px 96px;
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px;
+  line-height:1.6;
+}
+.mono{ font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace; }
+
+header.title-block{
+  display:flex; flex-direction:column; gap:10px;
+  padding-bottom:28px; margin-bottom:36px;
+  border-bottom:2px solid var(--ink);
+}
+.eyebrow{
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--accent-ink); font-weight:600;
+}
+h1{
+  font-family: Iowan Old Style, "Palatino Linotype", Palatino, Georgia, serif;
+  font-size:34px; line-height:1.2; margin:0; font-weight:600;
+  text-wrap:balance; color:var(--ink);
+}
+.meta{
+  display:flex; flex-wrap:wrap; gap:6px 22px;
+  font-size:13.5px; color:var(--ink-muted);
+}
+.meta b{ color:var(--ink); font-weight:600; }
+
+h2{
+  font-family: Iowan Old Style, "Palatino Linotype", Palatino, Georgia, serif;
+  font-size:23px; font-weight:600; margin:44px 0 14px; text-wrap:balance;
+  color:var(--ink);
+}
+h2 .num{ color:var(--accent-ink); font-family: ui-monospace, Consolas, monospace; font-size:16px; margin-right:8px; }
+h3{ font-size:16.5px; font-weight:700; margin:22px 0 8px; color:var(--ink); }
+p{ margin:0 0 14px; max-width:66ch; }
+p.lead{ font-size:17px; color:var(--ink-muted); }
+ul,ol{ margin:0 0 14px; padding-left:22px; }
+li{ margin-bottom:6px; }
+strong{ color:var(--ink); }
+.q{
+  font-style:italic; color:var(--ink-muted);
+  border-left:2px solid var(--rule); padding-left:14px; margin:14px 0;
+}
+
+.grid3{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0 26px;
+}
+@media (max-width:640px){ .grid3{ grid-template-columns:1fr; } }
+.card{
+  background:var(--surface); border:1px solid var(--rule); border-radius:10px;
+  padding:16px 18px; box-shadow:var(--shadow);
+}
+.card h4{
+  margin:0 0 10px; font-size:12.5px; letter-spacing:0.04em; text-transform:uppercase;
+  font-weight:700;
+}
+.card.in h4{ color:var(--ok); }
+.card.p2 h4{ color:var(--ink-muted); }
+.card.out h4{ color:var(--scope-out); }
+.card ul{ margin:0; padding-left:18px; font-size:14.5px; }
+.card li{ margin-bottom:5px; }
+
+.callout{
+  border-radius:10px; padding:16px 18px; margin:18px 0;
+  border-left:4px solid; font-size:15px;
+}
+.callout .label{
+  display:block; font-size:12px; font-weight:700; letter-spacing:0.05em;
+  text-transform:uppercase; margin-bottom:6px;
+}
+.callout p:last-child{ margin-bottom:0; }
+.callout.risk{ background:var(--risk-soft); border-color:var(--risk); }
+.callout.risk .label{ color:var(--risk-ink); }
+.callout.decided{ background:var(--ok-soft); border-color:var(--ok); }
+.callout.decided .label{ color:var(--ok); }
+.callout.out{ background:var(--scope-out-soft); border-color:var(--scope-out); }
+.callout.out .label{ color:var(--scope-out-ink); }
+
+table{ width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:14px; }
+.tablewrap{ overflow-x:auto; margin:14px 0 22px; }
+.tablewrap table{ margin:0; }
+th,td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--rule); vertical-align:top; }
+th{ font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-muted); font-weight:700; }
+td.mono, th.mono{ font-family:ui-monospace, Consolas, monospace; font-size:13px; }
+tr:last-child td{ border-bottom:none; }
+
+code{
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  background:var(--code-bg); padding:1px 6px; border-radius:4px; font-size:0.9em;
+}
+
+.checklist{ list-style:none; padding-left:0; }
+.checklist li{
+  display:flex; gap:10px; align-items:flex-start; padding:7px 0;
+  border-bottom:1px solid var(--rule);
+}
+.checklist li:last-child{ border-bottom:none; }
+.checklist .box{
+  flex:none; width:16px; height:16px; margin-top:3px;
+  border:1.5px solid var(--ink-muted); border-radius:4px;
+}
+
+.pre{
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:10px;
+  padding:14px 16px; overflow-x:auto; font-family: ui-monospace, Consolas, monospace;
+  font-size:13px; line-height:1.55; margin:14px 0 22px; white-space:pre;
+}
+
+.mermaid{
+  background:var(--surface); border:1px solid var(--rule); border-radius:10px;
+  padding:18px; margin:18px 0 26px; overflow-x:auto;
+}
+
+footer{
+  margin-top:56px; padding-top:20px; border-top:1px solid var(--rule);
+  font-size:13px; color:var(--ink-muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+}
+</style>
+
+<div class="doc">
+
+<header class="title-block">
+  <span class="eyebrow">Provisio · Техническое задание · v1 — утверждено</span>
+  <h1>Склад с нормативным учётом остатков + интеграция с Frontpad</h1>
+  <div class="meta">
+    <span><b>Проект:</b> Provisio (back-office доставки)</span>
+    <span><b>Клиент:</b> доставка роллов, 3 филиала</span>
+    <span><b>Статус:</b> утверждено, передано в разработку</span>
+    <span><b>Дата:</b> 26.07.2026</span>
+  </div>
+</header>
+
+<p class="lead">Клиент формулирует боль так: «не проебать остаток продуктов». Ему не нужна классическая инвентаризация — нужно, чтобы система сама считала, сколько сырья должно было остаться после продаж, и подсвечивала расхождение с тем, что намерил повар. Это новый функционал поверх существующего Provisio, не мелкая правка.</p>
+
+<h2><span class="num">01</span>Границы задачи</h2>
+<p>Три корзины — что делаем сейчас, что остаётся отложенным, и что не входит в Provisio никогда (это решено в разговоре с владельцем продукта, не подлежит обсуждению с клиентом-рестораном).</p>
+
+<div class="grid3">
+  <div class="card in">
+    <h4>Phase 1 — сейчас</h4>
+    <ul>
+      <li>Дашборд, Меню, Рецепты, Калькулятор, Закупки, Ингредиенты, Поставщики, Настройки (без изменений)</li>
+      <li><strong>Склад</strong> — восстановить + переработать под норматив/факт</li>
+      <li><strong>Интеграция с Frontpad</strong> — источник данных о проданных блюдах</li>
+    </ul>
+  </div>
+  <div class="card p2">
+    <h4>Phase 2 — без изменений</h4>
+    <ul>
+      <li>Заказы поставщикам (Orders)</li>
+      <li>Команда / приглашения</li>
+      <li>Уведомления</li>
+      <li>Приложения / интеграции</li>
+    </ul>
+  </div>
+  <div class="card out">
+    <h4>Не входит в Provisio никогда</h4>
+    <ul>
+      <li>CRM / рассылки в WhatsApp</li>
+      <li>Авто-дожим брошенных заказов</li>
+      <li>Разбивка выручки Kaspi vs нал (налоговая оптимизация клиента)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout out">
+  <span class="label">Почему WhatsApp-автоматизация исключена</span>
+  <p>Официальный WhatsApp Business Cloud API требует одобренные Meta шаблоны для любых исходящих сообщений вне 24-часового окна диалога — «дожим» брошенной корзины в них не проходит гладко. Неофициальные библиотеки (Baileys, whatsapp-web.js), которыми пользуется большинство малого бизнеса, прямо нарушают ToS WhatsApp — систематическая проактивная рассылка без явного opt-in — это ровно тот паттерн, на который реагирует антиспам Meta, вплоть до блокировки номера. Это отдельный проект с отдельными рисками, не часть Provisio.</p>
+</div>
+
+<h2><span class="num">02</span>Поток данных</h2>
+<p>Как норматив вообще получает входные данные — это главное, чего в Provisio нет ни в каком виде сегодня.</p>
+
+<pre class="mermaid">
+flowchart LR
+    A["Frontpad\nзаказы (продажи)"] --> B["Нормализация\nблюдо → recipe_id"]
+    B --> C["ReactiveEngine\nрасход ингредиентов\nпо рецепту × EP%"]
+    C --> D["Расчётный остаток\n(было − расход)"]
+    E["Повар вводит\nфактический остаток"] --> F["Сравнение\nплан vs факт"]
+    D --> F
+    F --> G["Расхождение\nкрасным, если > порога"]
+</pre>
+
+<h2><span class="num">03</span>Модуль «Склад»: восстановить ≠ то, что нужно</h2>
+<p>Проверил архивный <code>admin-inventory.js</code> и таблицу <code>inventory</code> в <code>supabase_schema_new.sql</code> — это простой статичный склад (добавил количество вручную → алерты по min_stock и сроку годности). Он <strong>не связан с продажами и не считает норматив</strong>. Разворачивать его «как есть» не решает боль клиента — это лишь часть фундамента.</p>
+
+<div class="tablewrap">
+<table>
+<tr><th>Слой</th><th>Источник</th><th>Что делать</th></tr>
+<tr><td>A — базовый UI склада</td><td>Есть в архиве</td><td>Восстановить категории, таблицу, алерты low-stock/expiry. Попутно починить баг: JS использует <code class="mono">min_stock_level</code>/<code class="mono">minStock</code>, схема — <code class="mono">min_stock</code> (та же болезнь, что в ДИАГНОСТИКА.md).</td></tr>
+<tr><td>B — норматив/факт (ядро фичи)</td><td>Нет нигде</td><td>Новая логика: <code class="mono">expected_quantity</code> = предыдущий остаток − Σ(продано блюд × расход по рецепту с EP%), сверх существующего <code class="mono">ReactiveEngine</code>. Плюс поля <code class="mono">actual_quantity</code>, <code class="mono">last_recount_at</code>, <code class="mono">variance</code>.</td></tr>
+<tr><td>C — экран «Быстрый контроль»</td><td>Нет</td><td>4 колонки: Ингредиент → Расчётный остаток → Факт от повара → Расхождение (красным при недостаче сверх порога, напр. 5%).</td></tr>
+</table>
+</div>
+
+<h2><span class="num">04</span>Модуль «Frontpad»: реальные находки, не предположения</h2>
+<p>Разведал публично доступную документацию (Frontpad не публикует официальный developer-портал — сведения собраны из документации сторонних интеграторов: DLVRY, FoodSoul, Chibbis).</p>
+
+<div class="tablewrap">
+<table>
+<tr><th>Метод</th><th>Направление</th><th>Что делает</th></tr>
+<tr><td class="mono">new_order</td><td>→ в Frontpad</td><td>Отправить заказ из внешнего источника в Frontpad</td></tr>
+<tr><td class="mono">get_products</td><td>← из Frontpad</td><td>Каталог товаров: массивы id / название / цена</td></tr>
+<tr><td class="mono">get_status</td><td>← из Frontpad</td><td>Статус заказа по id или телефону</td></tr>
+<tr><td class="mono">get_client</td><td>← из Frontpad</td><td>Данные клиента по телефону</td></tr>
+<tr><td class="mono">get_certificate</td><td>← из Frontpad</td><td>Проверка сертификата/бонуса</td></tr>
+<tr><td class="mono">webhook</td><td>← из Frontpad, push</td><td>Уведомление об изменении статуса заказа (URL + secret настраиваются в Frontpad → Настройки → Общие → API)</td></tr>
+</table>
+</div>
+
+<div class="callout risk">
+  <span class="label">Открытый технический риск — нужен спайк перед оценкой сроков</span>
+  <p>Публичный API Frontpad явно заточен под <strong>отправку</strong> заказов в Frontpad (интернет-магазин → касса), а не под выгрузку истории продаж наружу. Задокументированного метода «отдай мне все проданные позиции за день» нет. Webhook у сторонних интеграторов используется в первую очередь для синхронизации <em>статусов</em> — не гарантировано, что он присылает полную построчную корзину (какое блюдо, сколько штук) на каждый завершённый заказ.</p>
+  <p>Прежде чем проектировать модуль B (норматив), нужен разведывательный шаг с реальным API-секретом клиента: сделать тестовый заказ, посмотреть фактический payload вебхука, проверить <code class="mono">get_products</code> на реальном каталоге. Если построчной корзины в вебхуке нет — придётся либо запрашивать у поддержки Frontpad отдельный отчётный доступ, либо на первое время принимать ежедневный экспорт (CSV) из панели Frontpad как временный источник, пока API-доступ не подтверждён.</p>
+</div>
+
+<p>Дополнительно: товары Frontpad (<code class="mono">product_id</code>) нужно сопоставить с рецептами Provisio — сейчас в схеме нет такого поля. Понадобится, например, <code class="mono">recipes.frontpad_product_id</code> и экран ручного маппинга на случай, если названия/id не совпадают 1:1.</p>
+
+<h2><span class="num">05</span>Дисциплина именования полей</h2>
+<p>В проекте уже есть системная проблема — компонент сохраняет данные под одним именем колонки, а читает под другим (см. <code>ДИАГНОСТИКА.md</code>: <code class="mono">calculated_cost</code> vs <code class="mono">cost</code>, <code class="mono">sale_price</code> vs <code class="mono">price</code>, и т.д.). Всё новое в этом модуле обязано сверяться с канонiческими именами v8 схемы до реализации, а не после первого бага.</p>
+
+<h2><span class="num">06</span>Критерии готовности</h2>
+<ul class="checklist">
+  <li><span class="box"></span>Вкладка «Склад» открывается, показывает реальные данные, low-stock/expiry алерты работают, баг с именем поля min_stock устранён</li>
+  <li><span class="box"></span>Тестовый заказ во Frontpad отражается в Provisio как расход ингредиентов в течение согласованного окна (напр. 15 минут)</li>
+  <li><span class="box"></span>Повар может ввести фактический остаток с телефона; расхождение выше порога подсвечивается</li>
+  <li><span class="box"></span>Ни один экран Provisio не отправляет и не показывает данные WhatsApp/CRM/способов оплаты</li>
+  <li><span class="box"></span>Прогон полного цикла: продажа → списание → сверка — на реальных данных клиента перед презентацией</li>
+</ul>
+
+<h2><span class="num">07</span>Вопросы к клиенту на встрече</h2>
+<ul>
+  <li>Кто вечером вводит фактический остаток — старший повар с телефона или сам владелец раз в день?</li>
+  <li>Можно ли получить тестовый API-секрет Frontpad заранее, чтобы разведать реальный формат вебхука до встречи?</li>
+  <li>Совпадают ли названия блюд в Frontpad с рецептами в Provisio 1:1, или там разные наименования / позиции-модификаторы (соусы, добавки), которые тоже расходуют сырьё?</li>
+</ul>
+
+<footer>
+  <span>Provisio · внутренний документ, не для клиента</span>
+  <span>В работе: fullstack-разработчик, начиная с Phase 0 — Scoping</span>
+</footer>
+
+</div>

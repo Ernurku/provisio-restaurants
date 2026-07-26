@@ -1,0 +1,9 @@
+{
+  "name": "provisio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Provisio — back-office для ресторанов. Статичный фронтенд (admin.html и т.д.) + серверные функции Vercel в /api для интеграций (Frontpad и др.).",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}

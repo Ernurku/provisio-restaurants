@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provisio | Цифровой су-шеф для ресторанов</title>
+    <meta name="description" content="Точная калькуляция рецептов, автоматический учет остатков и контроль пищевой ценности. Созданно для шеф-поваров и рестораторов.">
+
+    <!-- Шрифты -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="glass-nav" id="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <a href="index.html" class="logo">
+                    Provisio<span class="logo-dot">.</span>
+                </a>
+                <nav class="main-nav" id="mainNav">
+                    <a href="#features">Возможности</a>
+                    <a href="pricing.html">Цены</a>
+                    <a href="#stories">Истории клиентов</a>
+                    <a href="docs.html">Документация</a>
+                </nav>
+            </div>
+            <div class="header-right">
+                <a href="login.html" class="nav-link-login">Войти</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Попробовать бесплатно</a>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Открыть меню">
+                <i class="ph ph-list"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="#features">Возможности</a>
+            <a href="pricing.html">Цены</a>
+            <a href="#stories">Истории клиентов</a>
+            <a href="docs.html">Документация</a>
+            <div class="mobile-menu-actions">
+                <a href="login.html" class="nav-link-login">Войти</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Попробовать бесплатно</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="container hero-grid">
+            <div class="hero-text animate-fade-up">
+                <div class="hero-badge">
+                    <i class="ph ph-sparkle"></i>
+                    <span>Новое: AI-подсказки для оптимизации меню</span>
+                </div>
+                <h1>
+                    Избавьтесь от рутины при расчете <span class="text-accent-italic">себестоимости</span> блюд
+                </h1>
+                <p class="hero-subtitle">
+                    Точная калькуляция рецептов, автоматический учет остатков и контроль пищевой ценности в одном эстетичном приложении. Создано с любовью для шеф-поваров и рестораторов.
+                </p>
+                <div class="hero-actions">
+                    <a href="register.html" class="btn btn-accent btn-lg">
+                        Начать бесплатно
+                    </a>
+                    <a href="#" class="btn btn-ghost btn-lg">
+                        <i class="ph ph-play-circle icon-lg"></i> Смотреть демо
+                    </a>
+                </div>
+                <div class="hero-trust">
+                    <div class="avatar-stack">
+                        <div class="avatar" style="background-image: url('https://images.unsplash.com/photo-1583394838336-acd977736f90?w=80&q=80')"></div>
+                        <div class="avatar" style="background-image: url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=80&q=80')"></div>
+                        <div class="avatar" style="background-image: url('https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=80&q=80')"></div>
+                    </div>
+                    <span class="hero-trust-text">Более <strong>2,400</strong> шефов уже с нами</span>
+                </div>
+            </div>
+
+            <div class="hero-visual animate-fade-up-delay">
+                <div class="hero-visual-bg"></div>
+                <img src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&q=80&w=1200" alt="Планшет на кухне ресторана" class="hero-image">
+                <!-- Floating card -->
+                <div class="floating-card floating-card-bottom">
+                    <div class="floating-card-icon bg-olive-light">
+                        <i class="ph ph-plant text-olive"></i>
+                    </div>
+                    <div>
+                        <p class="floating-card-label">Себестоимость порции</p>
+                        <p class="floating-card-value">142.50 ₽</p>
+                    </div>
+                </div>
+                <div class="floating-card floating-card-top">
+                    <div class="floating-card-icon bg-peach-light">
+                        <i class="ph ph-trend-down text-peach"></i>
+                    </div>
+                    <div>
+                        <p class="floating-card-label">Фудкост снижен на</p>
+                        <p class="floating-card-value">−12%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES BENTO GRID -->
+    <section id="features" class="section bg-cream-dark">
+        <div class="container">
+            <div class="section-header">
+                <h2>Всё для идеальной кухни</h2>
+                <p>Мы переосмыслили кухонный менеджмент, убрав таблицы и скучные отчеты. Управляйте процессами красиво.</p>
+            </div>
+
+            <div class="features-grid">
+
+                <!-- Feature 1 — Large -->
+                <a href="feature-calculation.html" class="feature-card feature-card-large" id="feature-calc">
+                    <div class="feature-icon bg-peach-light">
+                        <i class="ph ph-receipt text-peach"></i>
+                    </div>
+                    <h3>Калькуляция и Рецепты</h3>
+                    <p>Сверхточный учет ингредиентов, коэффициентов отхода и стоимости труда. Создавайте техкарты в пару кликов, наслаждаясь процессом.</p>
+                    <span class="feature-link">Подробнее <i class="ph ph-arrow-right"></i></span>
+                </a>
+
+                <!-- Feature 2 -->
+                <a href="feature-nutrition.html" class="feature-card" id="feature-nutrition">
+                    <div class="feature-icon bg-olive-light">
+                        <i class="ph ph-heartbeat text-olive"></i>
+                    </div>
+                    <h3>Пищевая ценность</h3>
+                    <p>Автоматический подсчет БЖУ, калорийности и еще 38 нутриентов для каждого вашего шедевра.</p>
+                    <span class="feature-link">Подробнее <i class="ph ph-arrow-right"></i></span>
+                </a>
+
+                <!-- Feature 3 -->
+                <a href="feature-inventory.html" class="feature-card" id="feature-inventory">
+                    <div class="feature-icon bg-olive-light">
+                        <i class="ph ph-package text-olive"></i>
+                    </div>
+                    <h3>Инвентаризация</h3>
+                    <p>Элегантный контроль склада, автоматические списания и прогнозирование заказов поставщикам.</p>
+                    <span class="feature-link">Подробнее <i class="ph ph-arrow-right"></i></span>
+                </a>
+
+                <!-- Feature 4 -->
+                <a href="feature-teamwork.html" class="feature-card" id="feature-teamwork">
+                    <div class="feature-icon bg-peach-light">
+                        <i class="ph ph-users text-peach"></i>
+                    </div>
+                    <h3>Командная работа</h3>
+                    <p>Синхронизация данных в реальном времени между шефом, су-шефом и управляющим.</p>
+                    <span class="feature-link">Подробнее <i class="ph ph-arrow-right"></i></span>
+                </a>
+
+
+
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS SECTION -->
+    <section class="section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number" data-count="2400">0</span>
+                    <span class="stat-label">Шеф-поваров</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number" data-count="15000">0</span>
+                    <span class="stat-label">Рецептов создано</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number" data-count="98">0</span>
+                    <span class="stat-label">% точности калькуляции</span>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- SUCCESS STORIES -->
+    <section id="stories" class="section bg-olive-section">
+        <div class="container">
+            <div class="stories-header">
+                <div>
+                    <h2 class="text-cream">Истории со вкусом</h2>
+                    <p class="text-cream-muted">Они доверили нам рутину, чтобы сфокусироваться на творчестве и гастрономии.</p>
+                </div>
+            </div>
+
+            <div class="stories-grid">
+                <!-- Review 1 -->
+                <div class="story-card">
+                    <div class="story-stars">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                    <p class="story-text">«Наконец-то приложение для ресторанов, которое не выглядит как Excel из 90-х. Расчет фудкоста стал эстетичным удовольствием.»</p>
+                    <div class="story-author">
+                        <div class="story-avatar" style="background-image: url('https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&q=80')"></div>
+                        <div>
+                            <p class="story-name">Марк Левин</p>
+                            <p class="story-role">Шеф-повар, "Bistro Blanc"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="story-card story-card-elevated">
+                    <div class="story-stars">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                    <p class="story-text">«Функция автоподсчета нутриентов спасла нашу пекарню при переходе на ПП-меню. Это просто магия, завернутая в красивый UI.»</p>
+                    <div class="story-author">
+                        <div class="story-avatar" style="background-image: url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=100&q=80')"></div>
+                        <div>
+                            <p class="story-name">Анна Рост</p>
+                            <p class="story-role">Владелица, "Croissant & Co."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 3 -->
+                <div class="story-card">
+                    <div class="story-stars">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                    <p class="story-text">«Мощнейший контроль склада. Подтверждение поставок и автоматический пересчёт остатков — теперь всё прозрачно и под контролем.»</p>
+                    <div class="story-author">
+                        <div class="story-avatar" style="background-image: url('https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=100&q=80')"></div>
+                        <div>
+                            <p class="story-name">Дмитрий Исаев</p>
+                            <p class="story-role">Су-шеф, "Графит"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA SECTION -->
+    <section class="section cta-section">
+        <div class="container text-center">
+            <h2>Готовы оптимизировать вашу кухню?</h2>
+            <p class="section-subtitle">Присоединяйтесь к тысячам шеф-поваров, которые уже доверяют Provisio. Первые 7 дней — бесплатно.</p>
+            <div class="cta-actions">
+                <a href="register.html" class="btn btn-accent btn-lg">Начать бесплатно</a>
+                <a href="pricing.html" class="btn btn-outline btn-lg">Узнать цены</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+
+                <!-- Brand -->
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        Provisio<span class="logo-dot">.</span>
+                    </a>
+                    <p>Эстетичный цифровой су-шеф для тех, кто относится к еде как к искусству.</p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Telegram"><i class="ph ph-telegram-logo"></i></a>
+                    </div>
+                </div>
+
+                <!-- Product -->
+                <div class="footer-col">
+                    <h4>Продукт</h4>
+                    <ul>
+                        <li><a href="index.html#features">Возможности</a></li>
+                        <li><a href="pricing.html">Ценообразование</a></li>
+                        <li><a href="security.html">Безопасность</a></li>
+                    </ul>
+                </div>
+
+                <!-- Resources -->
+                <div class="footer-col">
+                    <h4>Ресурсы</h4>
+                    <ul>
+                        <li><a href="docs.html">Документация</a></li>
+                        <li><a href="blog.html">Блог шефа</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Provisio Inc. Все права защищены.</p>
+                <div class="footer-bottom-links">
+                    <a href="privacy.html">Политика конфиденциальности</a>
+                    <a href="terms.html">Условия использования</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>

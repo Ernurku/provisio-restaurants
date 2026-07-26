@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Документация | Provisio</title>
+    <meta name="description" content="Руководства, API-документация и ответы на вопросы по работе с Provisio.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="glass-nav" id="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <a href="index.html" class="logo">Provisio<span class="logo-dot">.</span></a>
+                <nav class="main-nav">
+                    <a href="index.html#features">Возможности</a>
+                    <a href="pricing.html">Цены</a>
+                    <a href="index.html#stories">Истории клиентов</a>
+                    <a href="docs.html">Документация</a>
+                </nav>
+            </div>
+            <div class="header-right">
+                <a href="login.html" class="nav-link-login">Войти</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Попробовать бесплатно</a>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Меню"><i class="ph ph-list"></i></button>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="index.html#features">Возможности</a>
+            <a href="pricing.html">Цены</a>
+            <a href="index.html#stories">Истории клиентов</a>
+            <a href="docs.html">Документация</a>
+        </div>
+    </header>
+
+    <section class="page-hero">
+        <div class="container">
+            <div class="breadcrumbs">
+                <a href="index.html">Главная</a>
+                <span class="separator">/</span>
+                <span>Документация</span>
+            </div>
+            <h1>Документация</h1>
+            <p>Всё, что нужно знать для эффективной работы с Provisio. Руководства и примеры использования.</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="docs-layout">
+
+            <!-- Sidebar -->
+            <aside class="docs-sidebar">
+                <h4>Содержание</h4>
+                <nav class="docs-sidebar-nav">
+                    <a href="#getting-started" class="active">Начало работы</a>
+                    <a href="#recipes">Работа с рецептами</a>
+                    <a href="#calculation">Калькуляция</a>
+                    <a href="#inventory">Инвентаризация</a>
+                    <a href="#team-management">Управление командой</a>
+                </nav>
+            </aside>
+
+            <!-- Content -->
+            <main class="docs-content">
+                <section id="getting-started">
+                    <h2>Начало работы</h2>
+                    <p>Добро пожаловать в Provisio! Это руководство поможет вам настроить аккаунт и начать работу за несколько минут.</p>
+
+                    <h3>1. Создание аккаунта</h3>
+                    <p>Зарегистрируйтесь на сайте. Вам понадобится только email и название заведения. Пробный период — 7 дней бесплатно.</p>
+
+                    <div class="docs-card">
+                        <h4><i class="ph ph-lightbulb"></i> Подсказка</h4>
+                        <p>При регистрации укажите тип заведения (ресторан, кафе, пекарня) — это поможет нам настроить интерфейс под ваши нужды.</p>
+                    </div>
+
+                    <h3>2. Настройка заведения</h3>
+                    <p>После регистрации настройте базовые параметры:</p>
+                    <p>• Валюта и формат чисел<br>
+                    • Единицы измерения (граммы, килограммы, литры)<br>
+                    • Категории блюд и ингредиентов<br>
+                    • Базовые коэффициенты отхода</p>
+
+                    <h3>3. Импорт данных</h3>
+                    <p>Вы можете импортировать существующие данные из Excel или CSV-файлов:</p>
+                    <pre><code>Формат CSV для ингредиентов:
+Название, Единица, Цена за единицу, Категория
+"Мука пшеничная в/с", "кг", 85.00, "Сухие"
+"Масло сливочное 82.5%", "кг", 890.00, "Молочные"
+"Яйцо куриное С1", "шт", 12.50, "Яйца"</code></pre>
+                </section>
+
+                <section id="recipes">
+                    <h2>Работа с рецептами</h2>
+                    <p>Рецепты — основа Provisio. Каждый рецепт включает список ингредиентов, этапы приготовления и автоматически рассчитанную себестоимость.</p>
+
+                    <h3>Создание рецепта</h3>
+                    <p>Перейдите в раздел «Рецепты» → «Создать новый» или нажмите <code>Ctrl+N</code>. Заполните базовую информацию:</p>
+                    <p>• Название блюда<br>
+                    • Категория (салаты, горячие, десерты и т.д.)<br>
+                    • Выход (вес готовой порции)<br>
+                    • Описание и фотография</p>
+
+                    <h3>Добавление ингредиентов</h3>
+                    <p>Ищите ингредиенты в базе через поиск или добавляйте новые. Для каждого ингредиента укажите:</p>
+                    <p>• Количество (брутто или нетто)<br>
+                    • Коэффициент отхода (если не задан глобально)<br>
+                    • Способ обработки</p>
+
+                    <div class="docs-card">
+                        <h4><i class="ph ph-info"></i> Вложенные рецепты</h4>
+                        <p>Вы можете использовать один рецепт как ингредиент другого. Например, соус «Бешамель» может быть ингредиентом лазаньи. Себестоимость пересчитывается каскадно.</p>
+                    </div>
+                </section>
+
+                <section id="calculation">
+                    <h2>Калькуляция</h2>
+                    <p>Provisio автоматически рассчитывает себестоимость каждого блюда на основе его рецепта и текущих цен на ингредиенты.</p>
+
+                    <h3>Формула расчёта</h3>
+                    <pre><code>Себестоимость = Σ (Количество_брутто × Цена_за_единицу)
+                + Стоимость_труда
+                + Накладные_расходы
+
+Где Количество_брутто = Количество_нетто / (1 - Коэф_отхода)</code></pre>
+
+                    <h3>Фудкост</h3>
+                    <p>Фудкост (food cost) — это отношение себестоимости к цене продажи. Рекомендуемый диапазон: 25–35%. Provisio покажет предупреждение, если фудкост выходит за установленные вами рамки.</p>
+                </section>
+
+                <section id="inventory">
+                    <h2>Инвентаризация</h2>
+                    <p>Модуль инвентаризации помогает контролировать складские остатки, сроки годности и планировать закупки.</p>
+
+                    <h3>Приём товара</h3>
+                    <p>Сканируйте штрих-коды камерой телефона или вводите данные вручную. Provisio автоматически обновит остатки и цены.</p>
+
+                    <h3>Автоматическое списание</h3>
+                    <p>При подключении POS-системы ингредиенты списываются автоматически при каждой продаже блюда. Поддерживаемые POS: iiko, R-Keeper, СБИС, Poster.</p>
+                </section>
+
+                <section id="team-management">
+                    <h2>Управление командой</h2>
+                    <p>Приглашайте сотрудников и назначайте роли с гибкими правами доступа.</p>
+
+                    <h3>Доступные роли</h3>
+                    <p>• <strong>Владелец</strong> — полный доступ ко всему<br>
+                    • <strong>Управляющий</strong> — финансы, отчёты, цены<br>
+                    • <strong>Шеф-повар</strong> — рецепты, техкарты, меню<br>
+                    • <strong>Су-шеф</strong> — рецепты, склад<br>
+                    • <strong>Повар</strong> — только просмотр рецептов<br>
+                    • <strong>Бухгалтер</strong> — только финансовые отчёты</p>
+                </section>
+
+
+            </main>
+
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">Provisio<span class="logo-dot">.</span></a>
+                    <p>Эстетичный цифровой су-шеф для тех, кто относится к еде как к искусству.</p>
+                    <div class="social-links"><a href="#" aria-label="Telegram"><i class="ph ph-telegram-logo"></i></a></div>
+                </div>
+                <div class="footer-col"><h4>Продукт</h4><ul><li><a href="index.html#features">Возможности</a></li><li><a href="pricing.html">Ценообразование</a></li><li><a href="security.html">Безопасность</a></li></ul></div>
+                <div class="footer-col"><h4>Ресурсы</h4><ul><li><a href="docs.html">Документация</a></li><li><a href="blog.html">Блог шефа</a></li></ul></div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Provisio Inc. Все права защищены.</p>
+                <div class="footer-bottom-links"><a href="privacy.html">Политика конфиденциальности</a><a href="terms.html">Условия использования</a></div>
+            </div>
+        </div>
+    </footer>
+    <script src="main.js"></script>
+</body>
+</html>

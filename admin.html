@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления | Provisio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Supabase -->
+    <script src="js/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <!-- i18n (RU / EN / EL) — загружается рано, чтобы переводить и статику, и динамику -->
+    <script src="js/i18n.js?v=1"></script>
+    <link rel="stylesheet" href="css/admin/variables.css">
+    <link rel="stylesheet" href="css/admin/layout.css">
+    <link rel="stylesheet" href="css/admin/components.css">
+    <link rel="stylesheet" href="css/admin/pages.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== Onboarding guided tour ===== */
+        .tour-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 20, 20, 0.55);
+            z-index: 4000;
+            display: none;
+        }
+        .tour-backdrop.active { display: block; }
+
+        /* The highlighted element pops above the backdrop with a light ring */
+        .tour-highlight {
+            position: relative;
+            z-index: 4001;
+            pointer-events: none;
+            border-radius: var(--radius-sm, 12px);
+            box-shadow: 0 0 0 3px var(--accent-olive, #8A9A83), 0 0 0 9px var(--accent-soft, rgba(138, 154, 131, 0.35));
+            transition: box-shadow 0.2s ease;
+        }
+
+        .tour-tooltip {
+            position: fixed;
+            z-index: 4002;
+            width: 320px;
+            max-width: 90vw;
+            background: var(--bg-card, #fff);
+            color: var(--text-primary, #2b2b2b);
+            border: 1px solid var(--border-color-dark, #E8E0D9);
+            border-radius: var(--radius-md, 16px);
+            padding: 22px;
+            box-shadow: var(--shadow-elevated, 0 24px 60px -12px rgba(74, 59, 50, 0.25));
+            font-family: var(--font-sans, sans-serif);
+            display: none;
+        }
+        .tour-tooltip.active { display: block; }
+        .tour-tooltip-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .tour-tooltip-icon {
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
+            border-radius: var(--radius-full, 9999px);
+            background: var(--accent-soft, rgba(138, 154, 131, 0.15));
+            color: var(--accent-olive, #8A9A83);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .tour-tooltip-step {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent-olive-dark, #687761);
+        }
+        .tour-tooltip-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-secondary, #7A6A5E);
+            margin-bottom: 16px;
+        }
+        .tour-progress {
+            height: 4px;
+            border-radius: var(--radius-full, 9999px);
+            background: var(--bg-secondary, #F4EFEB);
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+        .tour-progress-fill {
+            height: 100%;
+            width: 0;
+            border-radius: var(--radius-full, 9999px);
+            background: var(--accent-olive, #8A9A83);
+            transition: width 0.3s ease;
+        }
+        .tour-tooltip-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ===== Onboarding welcome / final modals (login-style) ===== */
+        .tutorial-modal {
+            padding: 0;
+            overflow: hidden;
+        }
+        .tutorial-hero {
+            position: relative;
+            height: 165px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .tutorial-hero-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .tutorial-hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(44, 36, 32, 0.3) 0%, rgba(44, 36, 32, 0.85) 100%);
+        }
+        .tutorial-hero-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            padding: 20px 24px;
+        }
+        .tutorial-hero-content-center {
+            align-items: center;
+            justify-content: center;
+        }
+        .tutorial-hero-logo {
+            font-family: var(--font-serif, serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--cream, #FDFBF7);
+        }
+        .tutorial-hero-logo .logo-dot { color: var(--accent-peach, #EFA694); }
+        .tutorial-hero-badge {
+            width: 72px;
+            height: 72px;
+            border-radius: var(--radius-full, 9999px);
+            background: rgba(253, 251, 247, 0.92);
+            color: var(--accent-olive, #8A9A83);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            box-shadow: var(--shadow-elevated, 0 24px 60px -12px rgba(0, 0, 0, 0.25));
+        }
+        .tutorial-hero-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 3;
+            color: #fff !important;
+            background: rgba(0, 0, 0, 0.28);
+            border-radius: var(--radius-full, 9999px);
+        }
+        .tutorial-hero-close:hover { background: rgba(0, 0, 0, 0.45); }
+        .tutorial-body { padding: 24px; }
+        .tutorial-title {
+            font-family: var(--font-serif, serif);
+            font-size: 1.35rem;
+            color: var(--text-primary, #4A3B32);
+            margin-bottom: 10px;
+        }
+        .tutorial-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-secondary, #7A6A5E);
+            margin-bottom: 18px;
+        }
+        .tutorial-quote {
+            border-left: 3px solid var(--accent-olive, #8A9A83);
+            padding-left: 14px;
+        }
+        .tutorial-quote p {
+            font-family: var(--font-serif, serif);
+            font-style: italic;
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: var(--text-primary, #4A3B32);
+        }
+        .tutorial-modal .modal-footer {
+            padding: 0 24px 24px;
+            border-top: none;
+        }
+
+        @media (max-width: 768px) {
+            .tour-tooltip {
+                left: 50% !important;
+                transform: translateX(-50%);
+                bottom: 20px;
+                top: auto !important;
+            }
+        }
+
+        /* ===== Language switcher (topbar) ===== */
+        .lang-switcher { position: relative; }
+        .lang-switcher .topbar-btn { display: inline-flex; align-items: center; gap: 6px; }
+        .lang-current-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.03em; }
+        .lang-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 168px;
+            background: var(--bg-card, #fff);
+            border: 1px solid var(--border-color-dark, #E8E0D9);
+            border-radius: var(--radius-md, 14px);
+            box-shadow: var(--shadow-elevated, 0 24px 60px -12px rgba(74, 59, 50, 0.25));
+            padding: 6px;
+            z-index: 3500;
+            display: none;
+        }
+        .lang-dropdown.open { display: block; }
+        .lang-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: var(--radius-sm, 10px);
+            font-size: 0.9rem;
+            color: var(--text-primary, #2b2b2b);
+            text-decoration: none;
+        }
+        .lang-option:hover { background: var(--bg-secondary, #F4EFEB); }
+        .lang-option.active { color: var(--accent-olive, #8A9A83); font-weight: 700; }
+        .lang-option .lang-check { opacity: 0; font-size: 0.95rem; }
+        .lang-option.active .lang-check { opacity: 1; }
+    </style>
+</head>
+
+<body class="admin-body">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="sidebar-header">
+            <a href="index.html" class="logo">Provisio<span class="logo-dot">.</span></a>
+            <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Свернуть меню">
+                <i class="ph ph-caret-left"></i>
+            </button>
+        </div>
+        <nav class="sidebar-menu">
+            <a href="#" class="sidebar-link active" data-tab="dashboard">
+                <i class="ph ph-squares-four"></i><span>Дашборд</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="menu_items">
+                <i class="ph ph-fork-knife"></i><span>Меню</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="recipes">
+                <i class="ph ph-book-open-text"></i><span>Рецепты</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="calculation">
+                <i class="ph ph-calculator"></i><span>Калькуляция</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="purchasing">
+                <i class="ph ph-shopping-cart"></i><span>Закупки</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="ingredients">
+                <i class="ph ph-carrot"></i><span>Ингредиенты</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="inventory">
+                <i class="ph ph-package"></i><span>Склад</span>
+            </a>
+            <!-- PHASE 2 — archived: Заказы, Команда, Уведомления, Приложения -->
+            <!--
+            <a href="#" class="sidebar-link" data-tab="orders">
+                <i class="ph ph-clipboard-text"></i><span>Заказы</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="team">
+                <i class="ph ph-users-three"></i><span>Команда</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="notifications">
+                <i class="ph ph-bell-ringing"></i><span>Уведомления</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="applications">
+                <i class="ph ph-app-window"></i><span>Приложения</span>
+            </a>
+            -->
+            <a href="#" class="sidebar-link" data-tab="suppliers">
+                <i class="ph ph-truck"></i><span>Поставщики</span>
+            </a>
+            <a href="#" class="sidebar-link" data-tab="settings">
+                <i class="ph ph-gear-six"></i><span>Настройки</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="sidebarUserAvatar">U</div>
+                <div class="sidebar-user-info">
+                    <span class="sidebar-user-name" id="sidebarUserName">Пользователь</span>
+                    <span class="sidebar-user-role" id="sidebarUserRole">Должность</span>
+                </div>
+            </div>
+            <a href="#" id="logoutBtn" class="sidebar-link sidebar-link-logout">
+                <i class="ph ph-sign-out"></i><span>Выйти</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <!-- Top Bar -->
+        <header class="admin-topbar">
+            <button class="mobile-sidebar-toggle" id="sidebarToggle">
+                <i class="ph ph-list"></i>
+            </button>
+            <div class="topbar-title" id="topbarTitle">Дашборд</div>
+            <div class="topbar-actions">
+                <!-- Data Sync Status -->
+                <div class="sync-status topbar-btn" id="syncStatus" title="Данные защищены">
+                    <i class="ph ph-cloud-check" id="syncStatusIcon"></i>
+                </div>
+
+                <!-- Global Search -->
+                <div class="global-search" id="globalSearch">
+                    <button class="topbar-btn" id="searchToggleBtn" title="Поиск">
+                        <i class="ph ph-magnifying-glass"></i>
+                    </button>
+                    <div class="global-search-dropdown" id="searchDropdown">
+                        <div class="global-search-input-wrap">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" id="globalSearchInput"
+                                placeholder="Поиск по рецептам, ингредиентам, сотрудникам..." autocomplete="off">
+                            <kbd>Esc</kbd>
+                        </div>
+                        <div class="global-search-results" id="searchResults">
+                            <div class="search-empty">Начните вводить для поиска...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Bell -->
+                <div class="notifications-bell-wrap" id="notifBellWrap">
+                    <button class="topbar-btn" id="notifBellBtn" title="Уведомления">
+                        <i class="ph ph-bell"></i>
+                        <span class="notification-dot" style="display: none;"></span>
+                    </button>
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-dropdown-header">
+                            <h4>Уведомления</h4>
+                            <a href="#" class="card-link" id="viewAllNotifsLink">Все уведомления</a>
+                        </div>
+                        <div class="notif-dropdown-list" id="notifDropdownList">
+                            <!-- Rendered dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Language Switcher -->
+                <div class="lang-switcher" id="langSwitcherWrap">
+                    <button class="topbar-btn" id="langSwitcherBtn" title="Язык / Language">
+                        <i class="ph ph-translate"></i><span class="lang-current-label">РУ</span>
+                    </button>
+                    <div class="lang-dropdown" id="langDropdown" data-no-i18n>
+                        <a href="#" class="lang-option" data-lang="ru">Русский <i class="ph ph-check lang-check"></i></a>
+                        <a href="#" class="lang-option" data-lang="en">English <i class="ph ph-check lang-check"></i></a>
+                        <a href="#" class="lang-option" data-lang="el">Ελληνικά <i class="ph ph-check lang-check"></i></a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========== DASHBOARD TAB ========== -->
+        <div class="admin-tab active" id="tab-dashboard">
+            <!-- Provisio Insights (Hidden until enough data) -->
+            <div class="dashboard-insight-card" id="dashboardInsights" style="display: none; background: linear-gradient(135deg, var(--accent-olive) 0%, var(--accent-olive-dark) 100%); color: var(--text-inverse); padding: 24px; border-radius: var(--radius-md); margin-bottom: 24px; box-shadow: var(--shadow-card); position: relative; overflow: hidden;">
+                <div style="position: relative; z-index: 2;">
+                    <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 8px;">Аналитика Provisio</h3>
+                    <p style="font-size: 0.8125rem; opacity: 0.9; max-width: 500px;">Ваш фудкост снизился на 4.2% за прошлую неделю. Мы рекомендуем обновить цены на 3 позиции меню для оптимизации прибыли.</p>
+                </div>
+                <i class="ph ph-chart-line-up" style="position: absolute; right: 20px; bottom: -10px; font-size: 120px; opacity: 0.1; transform: rotate(-10deg);"></i>
+            </div>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon bg-olive-light"><i class="ph ph-currency-dollar text-olive"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiRevenue">—</span>
+                        <span class="kpi-label">Выручка за месяц</span>
+                    </div>
+                    <span class="kpi-change" id="kpiRevenueChange">—</span>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon bg-peach-light"><i class="ph ph-chart-pie text-peach"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiFoodcost">—</span>
+                        <span class="kpi-label">Средний фудкост <span class="tooltip-trigger"
+                                data-tooltip="Фудкост — отношение себестоимости блюда к его цене продажи. Рекомендуемый диапазон: 25–35%."><i
+                                    class="ph ph-question"></i></span></span>
+                    </div>
+                    <span class="kpi-change" id="kpiFoodcostChange">—</span>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon bg-olive-light"><i class="ph ph-book-open-text text-olive"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiRecipeCount">0</span>
+                        <span class="kpi-label">Активных рецептов</span>
+                    </div>
+                    <span class="kpi-change" id="kpiRecipeChange">—</span>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon bg-olive-light"><i class="ph ph-fork-knife text-olive"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiMenuItemsCount">0</span>
+                        <span class="kpi-label">Позиций в меню</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon bg-peach-light"><i class="ph ph-clipboard-text text-peach"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiOrdersCount">0</span>
+                        <span class="kpi-label">Активных заказов</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon bg-peach-light"><i class="ph ph-users text-peach"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-value" id="kpiTeamCount">0</span>
+                        <span class="kpi-label">Сотрудников</span>
+                    </div>
+                    <span class="kpi-change" id="kpiTeamChange">—</span>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Foodcost Chart - ТЗ п.1: Динамика фудкоста (рабочий расчёт) -->
+                <div class="dashboard-card dashboard-card-wide">
+                    <div class="card-header">
+                        <h3>Динамика фудкоста <span class="tooltip-trigger"
+                                data-tooltip="Фудкост — процент себестоимости от выручки. Ниже = лучше."><i
+                                    class="ph ph-question"></i></span></h3>
+                        <select class="card-select" id="foodcostPeriodSelect">
+                            <option value="7">Последние 7 дней</option>
+                            <option value="30" selected>Последний месяц</option>
+                            <option value="90">Последние 3 месяца</option>
+                        </select>
+                    </div>
+                    <div class="chart-placeholder">
+                        <div class="chart-bars" id="foodcostChart">
+                            <!-- Bars will be rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ТЗ п.1: Заменить Популярные на Высокомаржинальные -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Высокомаржинальные блюда <span class="tooltip-trigger"
+                                data-tooltip="Блюда, которые приносят больше всего прибыли относительно своей себестоимости."><i
+                                    class="ph ph-question"></i></span></h3>
+                    </div>
+                    <div class="popular-dishes" id="highMarginDishes">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Notifications Widget -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Уведомления</h3>
+                    <a href="#" class="card-link" id="dashNotifLink">Все уведомления</a>
+                </div>
+                <div class="notifications-list" id="dashboardNotifList">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== MENU ITEMS TAB ========== -->
+        <div class="admin-tab" id="tab-menu_items">
+            <div class="tab-header">
+                <div class="tab-header-left">
+                    <h3>Меню</h3>
+                    <div class="search-box">
+                        <i class="ph ph-magnifying-glass"></i>
+                        <input type="text" placeholder="Поиск по меню..." id="menuSearch">
+                    </div>
+                    <select class="filter-select" id="menuFilter">
+                        <option value="all">Все категории</option>
+                    </select>
+                </div>
+                <button class="btn btn-accent btn-sm" id="addMenuItemBtn">
+                    <i class="ph ph-plus"></i> Добавить пункт меню
+                </button>
+            </div>
+            <div class="data-table-wrapper">
+                <table class="data-table" id="menuItemsTable">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>Рецепт</th>
+                            <th>Цена продажи</th>
+                            <th>Себестоимость</th>
+                            <th>Маржа %</th>
+                            <th>Прибыль</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menuItemsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ========== RECIPES TAB ========== -->
+        <div class="admin-tab" id="tab-recipes">
+            <div class="tab-header">
+                <div class="tab-header-left">
+                    <div class="search-box">
+                        <i class="ph ph-magnifying-glass"></i>
+                        <input type="text" placeholder="Поиск рецептов..." id="recipeSearch">
+                    </div>
+                    <select class="filter-select" id="recipeFilter">
+                        <option value="all">Все категории</option>
+                        <option value="salads">Салаты</option>
+                        <option value="hot">Горячие</option>
+                        <option value="desserts">Десерты</option>
+                        <option value="drinks">Напитки</option>
+                        <option value="soups">Супы</option>
+                    </select>
+                </div>
+                <button class="btn btn-accent btn-sm" id="addRecipeBtn">
+                    <i class="ph ph-plus"></i> Создать рецепт
+                </button>
+                <button class="btn btn-outline btn-sm" id="aiParseMenuBtn" style="margin-left: 8px;">
+                    <i class="ph ph-brain"></i> AI: Загрузить техкарту
+                </button>
+                <input type="file" id="aiMenuFileInput" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="data-table-wrapper">
+                <table class="data-table" id="recipesTable">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>Себестоимость <span class="tooltip-trigger"
+                                    data-tooltip="Себестоимость — сумма затрат на все ингредиенты одной порции блюда."><i
+                                        class="ph ph-question"></i></span></th>
+                            <th>Фудкост <span class="tooltip-trigger"
+                                    data-tooltip="Фудкост — процент себестоимости от цены продажи. Оптимально: 25-35%."><i
+                                        class="ph ph-question"></i></span></th>
+                            <th>Выход</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recipesTableBody">
+                        <!-- Rendered dynamically by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ========== CALCULATION TAB ========== -->
+        <div class="admin-tab" id="tab-calculation">
+            <div class="calc-layout">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Калькулятор себестоимости</h3>
+                    </div>
+                    <div class="calc-form">
+                        <div class="form-group">
+                            <label>Название блюда</label>
+                            <input type="text" class="admin-input" id="calcDishName" placeholder="Введите название">
+                        </div>
+                        <div class="form-group">
+                            <label>Категория</label>
+                            <select class="admin-input" id="calcCategory">
+                                <option value="" disabled selected>Выберите категорию...</option>
+                                <option>Горячие блюда</option>
+                                <option>Салаты</option>
+                                <option>Десерты</option>
+                                <option>Супы</option>
+                                <option>Напитки</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Выход порции (г)</label>
+                                <input type="number" class="admin-input" id="calcPortionWeight" value="0" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Цена продажи</label>
+                                <div class="input-with-currency">
+                                    <input type="number" class="admin-input" id="calcSellPrice" value="28.00"
+                                        step="0.01">
+                                    <select class="currency-select" id="calcCurrency">
+                                        <option value="KZT">₸</option>
+                                        <option value="EUR">€</option>
+                                        <option value="USD" selected>$</option>
+                                        <option value="RUB">₽</option>
+                                        <option value="BYN">Br</option>
+                                        <option value="UZS">сўм</option>
+                                        <option value="KGS">сом</option>
+                                        <option value="AMD">֏</option>
+                                        <option value="AZN">₼</option>
+                                        <option value="TJS">смн</option>
+                                        <option value="MDL">L</option>
+                                        <option value="TMT">m</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="calc-section-title">Ингредиенты</h4>
+                        <div class="ingredient-list" id="calcIngredientList">
+                            <!-- Rendered by JS -->
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="addCalcIngredientBtn" style="margin-top: 16px;"><i
+                                class="ph ph-plus"></i> Добавить ингредиент</button>
+                    </div>
+                </div>
+                <div class="calc-result">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Результат</h3>
+                        </div>
+                        <div class="calc-summary" id="calcSummary">
+                            <!-- Rendered by JS -->
+                        </div>
+                        <div class="calc-gauge" id="calcGauge">
+                            <div class="gauge-bar">
+                                <div class="gauge-fill" id="gaugeFill" style="width: 27.1%;"></div>
+                            </div>
+                            <div class="gauge-labels"><span>0%</span><span
+                                    class="gauge-optimal">25-35%</span><span>50%+</span></div>
+                        </div>
+                        <div class="calc-actions" style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
+                            <button class="btn btn-accent btn-block" id="saveCalcToRecipesBtn" style="padding: 14px 24px; font-weight: 700;">
+                                <i class="ph ph-floppy-disk"></i> Сохранить в рецепты
+                            </button>
+                            <p class="section-hint" style="text-align: center; font-size: 0.75rem;">Блюдо автоматически появится в разделе «Рецепты»</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Пищевая ценность <span class="tooltip-trigger"
+                                    data-tooltip="КБЖУ — калорийность, белки, жиры, углеводы на порцию."><i
+                                        class="ph ph-question"></i></span></h3>
+                        </div>
+                        <div class="nutrition-grid">
+                            <div class="nutrition-item"><span class="nutrition-value" id="nutCalories">0</span><span
+                                    class="nutrition-label">Ккал</span></div>
+                            <div class="nutrition-item"><span class="nutrition-value" id="nutProtein">0</span><span
+                                    class="nutrition-label">Белки, г</span></div>
+                            <div class="nutrition-item"><span class="nutrition-value" id="nutFat">0</span><span
+                                    class="nutrition-label">Жиры, г</span></div>
+                            <div class="nutrition-item"><span class="nutrition-value" id="nutCarbs">0</span><span
+                                    class="nutrition-label">Углеводы, г</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PURCHASING (ЗАКУПКИ) TAB ========== -->
+        <div class="admin-tab" id="tab-purchasing">
+            <div class="tab-header">
+                <div class="tab-header-left">
+                    <h2>Закупки</h2>
+                    <p class="section-hint">Расчёт закупок по ожидаемым продажам. Укажите, сколько каждой позиции меню вы планируете продать в день — программа посчитает, сколько ингредиентов закупить и у какого поставщика дешевле.</p>
+                </div>
+                <div class="tab-header-right">
+                    <div class="period-toggle" style="display:inline-flex; gap:8px;">
+                        <button class="btn btn-outline btn-sm purchasing-period-btn active" data-days="1"><i class="ph ph-calendar-dot"></i> День</button>
+                        <button class="btn btn-outline btn-sm purchasing-period-btn" data-days="7"><i class="ph ph-calendar-dots"></i> Неделя</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3>Ожидаемые продажи в день</h3>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table" id="purchasingSalesTable">
+                        <thead>
+                            <tr>
+                                <th>Позиция меню</th>
+                                <th>Рецепт</th>
+                                <th>Продаж в день</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchasingSalesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="dashboard-card" style="margin-top: 24px;">
+                <div class="card-header">
+                    <h3>Список закупки</h3>
+                    <span class="badge badge-outline" id="purchasingPeriodLabel">на 1 день</span>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table" id="purchasingResultTable">
+                        <thead>
+                            <tr>
+                                <th>Ингредиент</th>
+                                <th>Сколько нужно</th>
+                                <th>Поставщик</th>
+                                <th>Цена за ед.</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchasingResultBody"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align: right;"><strong>Итого к закупке</strong></td>
+                                <td id="purchasingGrandTotal"><strong>—</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <p class="section-hint" style="margin-top: 12px;">Ингредиенты с пометкой «нет цены» не входят в итоговую сумму — добавьте им цену в разделе «Поставщики».</p>
+            </div>
+        </div>
+
+        <!-- ========== INGREDIENTS TAB ========== -->
+        <div class="admin-tab" id="tab-ingredients">
+            <div class="tab-header">
+                <div class="tab-header-left">
+                    <h3>Все ингредиенты</h3>
+                    <div class="search-box">
+                        <i class="ph ph-magnifying-glass"></i>
+                        <input type="text" placeholder="Поиск ингредиентов..." id="ingredientsSearch">
+                    </div>
+                </div>
+                <button class="btn btn-accent btn-sm" id="addIngredientBtn">
+                    <i class="ph ph-plus"></i> Добавить ингредиент
+                </button>
+            </div>
+            <div class="data-table-wrapper">
+                <table class="data-table" id="ingredientsTable">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>EP% (Съедобная часть)</th>
+                            <th>Плотность (г/мл)</th>
+                            <th>Калории (Ккал)</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ingredientsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ========== INVENTORY TAB (Склад) ========== -->
+        <div class="admin-tab" id="tab-inventory">
+            <div class="inventory-subtabs">
+                <button class="inv-subtab active" data-subtab="stock"><i class="ph ph-package"></i> Остатки</button>
+                <button class="inv-subtab" data-subtab="deliveries"><i class="ph ph-truck"></i> Поставки <span
+                        class="inv-subtab-badge" id="pendingDeliveriesCount">0</span></button>
+                <button class="inv-subtab" data-subtab="stocktake"><i class="ph ph-clipboard-text"></i> Ввод остатков</button>
+                <button class="inv-subtab" data-subtab="reconcile"><i class="ph ph-scales"></i> Сверка <span
+                        class="inv-subtab-badge" id="reconcileAlertBadge" style="display:none;">!</span></button>
+            </div>
+
+            <!-- ===== Остатки (базовый склад) ===== -->
+            <div class="inv-subtab-content active" id="invSubtabStock">
+                <div class="tab-header">
+                    <div class="tab-header-left">
+                        <div class="search-box"><i class="ph ph-magnifying-glass"></i><input type="text"
+                                placeholder="Поиск по складу..." id="inventorySearch"></div>
+                        <select class="filter-select" id="inventoryFilter">
+                            <option value="all">Все категории</option>
+                        </select>
+                        <button class="btn-icon-inline" id="editCategoriesBtn" title="Редактировать категории"><i
+                                class="ph ph-pencil-simple"></i></button>
+                    </div>
+                    <div class="inventory-valuation-summary" style="display: flex; align-items: center; gap: 12px; background: var(--surface-hover); padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <span style="font-size: 0.75rem; color: var(--chocolate-light); text-transform: uppercase; letter-spacing: 0.5px;">Оценка склада:</span>
+                        <strong id="inventoryValuationValue" style="color: var(--olive); font-size: 1.125rem;">$0.00</strong>
+                    </div>
+                    <button class="btn btn-accent btn-sm" id="addInventoryBtn"><i class="ph ph-plus"></i> Добавить товар</button>
+                </div>
+                <div class="inventory-alerts" id="inventoryAlerts" style="display: none;">
+                    <div class="alert-card alert-warning" id="alertLowStock" style="display: none;"><i class="ph ph-warning"></i>
+                        <div><strong id="lowStockCount">0 позиций</strong> с низким остатком</div>
+                    </div>
+                    <div class="alert-card alert-danger" id="alertExpired" style="display: none;"><i class="ph ph-x-circle"></i>
+                        <div><strong id="expiredCount">0 позиций</strong> с истёкшим сроком годности</div>
+                    </div>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Ингредиент</th><th>Категория</th><th>Остаток</th>
+                                <th>Мин. запас</th><th>Цена / ед.</th><th>Срок годности</th>
+                                <th>Статус</th><th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== Поставки ===== -->
+            <div class="inv-subtab-content" id="invSubtabDeliveries">
+                <div class="tab-header"><div class="tab-header-left"><h3>Ожидаемые поставки</h3></div></div>
+                <div class="deliveries-grid" id="pendingDeliveriesGrid"></div>
+                <div class="deliveries-log">
+                    <div class="card-header" style="margin-top: 24px;"><h3>Журнал подтверждённых поставок</h3></div>
+                    <div class="deliveries-log-list" id="confirmedDeliveriesList"></div>
+                </div>
+            </div>
+
+            <!-- ===== Ввод остатков (слепой ввод для повара) ===== -->
+            <div class="inv-subtab-content" id="invSubtabStocktake">
+                <div class="dashboard-card">
+                    <div class="card-header"><h3>Ввод фактических остатков</h3></div>
+                    <p class="section-hint">Пересчитайте продукты на складе и внесите то, что видите на полке. Расчётного значения здесь нет и не будет — это специально, чтобы сверка была честной. Владелец увидит расхождение отдельно.</p>
+                </div>
+
+                <div class="dashboard-card" id="stocktakeLockedNotice" style="display:none;">
+                    <div class="card-header"><h3><i class="ph ph-lock-simple"></i> Остатки уже отправлены</h3></div>
+                    <p class="section-hint" id="stocktakeLockedText"></p>
+                    <button class="btn btn-outline btn-sm" id="stocktakeNewSessionBtn">Начать новый ввод</button>
+                </div>
+
+                <div class="dashboard-card" id="stocktakeFormCard">
+                    <div class="form-group" style="max-width: 320px;">
+                        <label>Кто заполняет *</label>
+                        <input type="text" class="admin-input" id="stocktakeFilledBy" placeholder="Ваше имя">
+                        <p class="section-hint" style="font-size:0.75rem;">Пока просто впишите имя — список сотрудников появится в разделе «Команда» позже.</p>
+                    </div>
+                    <div class="stocktake-list" id="stocktakeList"><!-- Rendered by JS --></div>
+                    <button class="btn btn-accent btn-block" id="stocktakeReviewBtn" style="margin-top: 20px; padding: 14px 24px; font-weight: 700;">
+                        <i class="ph ph-check-circle"></i> Проверить и отправить
+                    </button>
+                </div>
+
+                <div class="dashboard-card" id="stocktakeReviewCard" style="display:none;">
+                    <div class="card-header"><h3>Проверьте перед отправкой</h3></div>
+                    <p class="section-hint">Всё верно? После отправки исправить сможет только владелец.</p>
+                    <div class="stocktake-review-list" id="stocktakeReviewList"></div>
+                    <div style="display:flex; gap: 12px; margin-top: 20px;">
+                        <button class="btn btn-outline" id="stocktakeBackBtn">Изменить</button>
+                        <button class="btn btn-accent" id="stocktakeSubmitBtn"><i class="ph ph-paper-plane-tilt"></i> Отправить</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Сверка (расчёт vs факт, для владельца) ===== -->
+            <div class="inv-subtab-content" id="invSubtabReconcile">
+                <div class="tab-header">
+                    <div class="tab-header-left">
+                        <h3>Сверка расчёта и факта</h3>
+                    </div>
+                    <div class="tab-header-right">
+                        <span class="badge badge-outline" id="reconcileThresholdBadge">Порог расхождения: 5%</span>
+                    </div>
+                </div>
+                <div class="dashboard-card" id="reconcileEmptyState">
+                    <div class="empty-state empty-state-card" style="width:100%;">
+                        <div class="empty-state-icon"><i class="ph ph-scales"></i></div>
+                        <h3>Пока нет данных для сверки</h3>
+                        <p>Как только повар отправит фактические остатки во вкладке «Ввод остатков», здесь появится сравнение с расчётом.</p>
+                    </div>
+                </div>
+                <div class="data-table-wrapper" id="reconcileTableWrap" style="display:none;">
+                    <table class="data-table" id="reconcileTable">
+                        <thead>
+                            <tr>
+                                <th>Ингредиент</th><th>Расчётный остаток</th><th>Факт</th>
+                                <th>Кто и когда внёс</th><th>Расхождение</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reconcileTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== ORDERS TAB — PHASE 2 ARCHIVED ========== -->
+        <!--
+        <div class="admin-tab" id="tab-orders">
+            <div class="tab-header">
+                <div class="tab-header-left">
+                    <h3>Заказы</h3>
+                    <div class="search-box">
+                        <i class="ph ph-magnifying-glass"></i>
+                        <input type="text" placeholder="Поиск заказов..." id="ordersSearch">
+                    </div>
+                </div>
+                <button class="btn btn-accent btn-sm" id="addOrderBtn">
+                    <i class="ph ph-plus"></i> Создать заказ
+                </button>
+            </div>
+            <div class="data-table-wrapper">
+                <table class="data-table" id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>ID Заказа</th><th>Поставщик</th><th>Дата</th>
+                            <th>Сумма</th><th>Статус</th><th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        -->
+
+        <!-- ========== SUPPLIERS TAB ========== -->
+        <div class="admin-tab" id="tab-suppliers">
+            <div class="suppliers-layout">
+                <!-- Left sidebar: supplier list -->
+                <div class="suppliers-sidebar">
+                    <div class="suppliers-sidebar-header">
+                        <button class="btn btn-accent btn-sm" id="createSupplierBtn" style="width:100%;">
+                            <i class="ph ph-plus"></i> Создать поставщика
+                        </button>
+                    </div>
+                    <div class="suppliers-search-row">
+                        <div class="search-box" style="flex:1; min-width: 0;">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" placeholder="Поиск..." id="supplierSearch">
+                        </div>
+                        <button class="btn-icon-inline" id="supplierFilterBtn" title="Фильтр по группам">
+                            <i class="ph ph-funnel"></i>
+                        </button>
+                    </div>
+                    <div class="suppliers-list" id="suppliersList">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Right panel: supplier details -->
+                <div class="suppliers-main" id="suppliersMain">
+                    <!-- Empty state -->
+                    <div class="empty-state" id="suppliersEmpty" style="margin-top: 60px;">
+                        <div class="empty-state-icon"><i class="ph ph-truck"></i></div>
+                        <h3>Выберите поставщика</h3>
+                        <p>Выберите поставщика на боковой панели, чтобы просмотреть или обновить его цены. Или создайте
+                            нового поставщика.</p>
+                        <div class="suppliers-tip-box" style="margin-top: 24px; padding: 12px; background: var(--surface-hover); border-radius: 8px; font-size: 0.8125rem; color: var(--chocolate-light);">
+                            <i class="ph ph-lightbulb" style="color: var(--accent); margin-right: 4px;"></i>
+                            <strong>Подсказка:</strong> Вы можете создавать и использовать абстрактные единицы (коробка, ящик, упаковка) в ценах на ингредиенты.
+                        </div>
+                    </div>
+
+                    <!-- Supplier detail (hidden by default) -->
+                    <div class="supplier-detail" id="supplierDetail" style="display: none;">
+                        <div class="supplier-detail-header">
+                            <h2 class="supplier-detail-name" id="supplierDetailName"
+                                style="font-family: var(--font-serif);"></h2>
+                            <div class="supplier-detail-actions">
+                                <div class="supplier-dropdown-wrap">
+                                    <button class="btn btn-outline btn-sm" id="supplierActionsBtn">
+                                        <i class="ph ph-dots-three"></i> Действия
+                                    </button>
+                                    <div class="supplier-dropdown" id="supplierActionsDropdown">
+                                        <a href="#" class="supplier-dropdown-item" id="renameSupplierBtn"><i
+                                                class="ph ph-pencil-simple"></i> Переименовать</a>
+                                        <a href="#" class="supplier-dropdown-item supplier-dropdown-danger"
+                                            id="deleteSupplierBtn"><i class="ph ph-trash"></i> Удалить</a>
+                                    </div>
+                                </div>
+                                <div class="supplier-dropdown-wrap">
+                                    <button class="btn btn-accent btn-sm" id="supplierAddBtn">
+                                        <i class="ph ph-plus"></i> Добавить
+                                    </button>
+                                    <div class="supplier-dropdown" id="supplierAddDropdown">
+                                        <a href="#" class="supplier-dropdown-item" id="addSupplierPriceBtn"><i
+                                                class="ph ph-package"></i> Добавить в ассортимент</a>
+                                        <a href="#" class="supplier-dropdown-item" id="addSupplierGroupBtn"><i
+                                                class="ph ph-folders"></i> Добавить в группы</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="supplierDeliveryDaysDisplay" style="margin: 0 32px 16px; padding: 12px 0; border-bottom: 1px solid var(--cream-dark); display: flex; gap: 8px; flex-wrap: wrap;">
+                            <!-- JS will fill this with .schedule-day-pill elements -->
+                        </div>
+                        
+                        <!-- Prices & Schedule Table -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Ассортимент и поставки</h3>
+                            </div>
+                            <div class="data-table-wrapper" style="overflow-x: auto;">
+                                <table class="data-table" id="supplierPricesTable" style="min-width: 700px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Ингредиент</th>
+                                            <th>Цена за уп.</th>
+                                            <th>Фасовка</th>
+                                            <th>Частота</th>
+                                            <th>День поставки</th>
+                                            <th>Объем</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="supplierPricesBody">
+                                        <!-- Rendered by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="supplier-prices-empty" id="supplierPricesEmpty" style="display:none; text-align: center; padding: 40px;">
+                                <i class="ph ph-receipt" style="font-size: 32px; color: var(--chocolate-light); opacity: 0.5; display: block; margin-bottom: 12px; margin-left: auto; margin-right: auto;"></i>
+                                <p style="color: var(--chocolate-light); font-size: 0.875rem; margin-bottom: 16px;">Нет ингредиентов в ассортименте</p>
+                                <button class="btn btn-accent btn-sm" id="emptyStateAddPriceBtn">
+                                    <i class="ph ph-plus"></i> Добавить
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Примечания</h3>
+                                <button class="btn btn-outline btn-sm" id="editSupplierNotesBtn">
+                                    <i class="ph ph-pencil-simple"></i> Редактировать
+                                </button>
+                            </div>
+                            <div id="supplierNotesDisplay" class="supplier-notes-display">
+                                <p class="supplier-notes-placeholder"
+                                    style="color: var(--chocolate-light); font-size: 0.875rem;">Нет примечаний. Нажмите
+                                    «Редактировать» чтобы добавить.</p>
+                            </div>
+                            <div id="supplierNotesEdit" style="display: none;">
+                                <textarea class="admin-input" id="supplierNotesTextarea" rows="5"
+                                    placeholder="Контактные данные, условия поставки, дни отгрузки..."></textarea>
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                    <button class="btn btn-accent btn-sm" id="saveSupplierNotesBtn">Сохранить</button>
+                                    <button class="btn btn-outline btn-sm" id="cancelSupplierNotesBtn">Отмена</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delivery Schedule Removed -->
+
+                        <!-- Groups -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Группы</h3>
+                            </div>
+                            <div class="data-table-wrapper">
+                                <table class="data-table" id="supplierGroupsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Группа</th>
+                                            <th>Кол-во ингредиентов</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="supplierGroupsBody">
+                                        <!-- Rendered by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="supplier-groups-empty" id="supplierGroupsEmpty" style="display:none;">
+                                <p
+                                    style="text-align: center; padding: 24px; color: var(--chocolate-light); font-size: 0.875rem;">
+                                    Поставщик не добавлен ни в одну группу.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== TEAM TAB — PHASE 2 ARCHIVED ========== -->
+        <!--
+        <div class="admin-tab" id="tab-team">
+            <div class="tab-header">
+                <div class="tab-header-left">
+                    <h3 style="font-family: var(--font-serif);">Команда — <span id="teamCount">6</span> сотрудников</h3>
+                </div>
+                <button class="btn btn-accent btn-sm" id="inviteTeamBtn"><i class="ph ph-user-plus"></i> Пригласить</button>
+            </div>
+            <div class="team-grid" id="teamGrid"></div>
+        </div>
+        -->
+
+        <!-- ========== NOTIFICATIONS TAB — PHASE 2 ARCHIVED ========== -->
+        <!--
+        <div class="admin-tab" id="tab-notifications">
+            <div class="tab-header">
+                <div class="tab-header-left">
+                    <h3 style="font-family: var(--font-serif);">Все уведомления</h3>
+                </div>
+                <div class="tab-header-right">
+                    <select class="filter-select" id="notifFilter">
+                        <option value="all">Все</option>
+                        <option value="recipes">По рецептам</option>
+                        <option value="inventory">По складу</option>
+                        <option value="team">По команде</option>
+                        <option value="system">Системные</option>
+                    </select>
+                </div>
+            </div>
+            <div class="notifications-full-list" id="fullNotifList"></div>
+        </div>
+        -->
+
+        <!-- ========== APPLICATIONS TAB — PHASE 2 ARCHIVED ========== -->
+        <!--
+        <div class="admin-tab" id="tab-applications">
+            <div class="tab-header">
+                <div class="tab-header-left">
+                    <h3 style="font-family: var(--font-serif);">Интеграции и Приложения</h3>
+                </div>
+            </div>
+            <div class="dashboard-grid" id="applicationsGrid">
+                <div style="padding: 24px; color: var(--text-muted); text-align: center; width: 100%;">Загрузка интеграций...</div>
+            </div>
+        </div>
+        -->
+
+        <!-- ========== SETTINGS TAB ========== -->
+        <div class="admin-tab" id="tab-settings">
+            <div class="settings-layout">
+                <div class="settings-nav">
+                    <a href="#" class="settings-nav-link active" data-settings="profile"><i
+                            class="ph ph-storefront"></i> Профиль заведения</a>
+                    <a href="#" class="settings-nav-link" data-settings="notifications"><i class="ph ph-bell"></i>
+                        Уведомления</a>
+                    <a href="#" class="settings-nav-link" data-settings="inventoryRules"><i class="ph ph-scales"></i>
+                        Склад и сверка</a>
+                    <a href="#" class="settings-nav-link" data-settings="integrations"><i class="ph ph-plug"></i>
+                        Интеграции</a>
+                    <a href="#" class="settings-nav-link" data-settings="billing"><i class="ph ph-credit-card"></i>
+                        Подписка</a>
+                    <!-- ТЗ п.8: Безопасность — УДАЛЕНА -->
+                </div>
+
+                <!-- Settings: Profile -->
+                <div class="settings-content" id="settingsContent">
+                    <div class="dashboard-card" id="settingsProfile">
+                        <div class="card-header">
+                            <h3>Профиль заведения</h3>
+                        </div>
+                        <form class="settings-form" id="profileForm">
+                            <div class="form-row">
+                                <div class="form-group"><label>Название</label><input type="text" class="admin-input"
+                                        id="venueName" placeholder="Введите название заведения"></div>
+                                <div class="form-group">
+                                    <label>Тип заведения</label>
+                                    <select class="admin-input" id="venueType">
+                                        <option value="" disabled selected>Выберите тип</option>
+                                        <option value="restaurant">Ресторан</option>
+                                        <option value="cafe">Кафе</option>
+                                        <option value="bakery">Пекарня</option>
+                                        <option value="confectionery">Кондитерская</option>
+                                        <option value="coffeeshop">Кофейня</option>
+                                        <option value="canteen">Столовая</option>
+                                        <option value="bar">Бар</option>
+                                        <option value="catering">Кейтеринг</option>
+                                        <option value="custom">Другое (свой вариант)</option>
+                                    </select>
+                                    <input type="text" class="admin-input custom-venue-input" id="customVenueInput"
+                                        placeholder="Введите тип заведения" style="display:none; margin-top: 8px;">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Адрес</label><input type="text" class="admin-input"
+                                        id="venueAddress" placeholder="Введите адрес заведения"></div>
+                                <div class="form-group">
+                                    <label>Телефон</label>
+                                    <input type="tel" class="admin-input" id="phoneInput"
+                                        placeholder="+7 (___) ___-__-__">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Валюта</label>
+                                    <select class="admin-input" id="settingsCurrency">
+                                        <option value="KZT">₸ (KZT) — Казахстанский тенге</option>
+                                        <option value="EUR">€ (EUR) — Евро</option>
+                                        <option value="USD" selected>$ (USD) — Доллар США</option>
+                                        <option value="RUB">₽ (RUB) — Российский рубль</option>
+                                        <option value="BYN">Br (BYN) — Белорусский рубль</option>
+                                        <option value="UZS">сўм (UZS) — Узбекский сум</option>
+                                        <option value="KGS">сом (KGS) — Киргизский сом</option>
+                                        <option value="AMD">֏ (AMD) — Армянский драм</option>
+                                        <option value="AZN">₼ (AZN) — Азербайджанский манат</option>
+                                        <option value="TJS">смн (TJS) — Таджикский сомони</option>
+                                        <option value="MDL">L (MDL) — Молдавский лей</option>
+                                        <option value="TMT">m (TMT) — Туркменский манат</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Единицы измерения</label>
+                                    <select class="admin-input" id="settingsUnits">
+                                        <option value="metric" selected>Метрическая (кг, л, г, мл)</option>
+                                        <option value="imperial">Имперская (lb, oz, fl oz)</option>
+                                        <option value="mixed">Смешанная (кг + шт + стаканы)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Часовой пояс</label>
+                                    <select class="admin-input" id="venueTimezone">
+                                    <option value="UTC+2">Калининград (UTC+2)</option>
+                                    <option value="UTC+2">Киев (UTC+2)</option>
+                                    <option value="UTC+3">Москва, Санкт-Петербург (UTC+3)</option>
+                                    <option value="UTC+3">Минск (UTC+3)</option>
+                                    <option value="UTC+4">Баку (UTC+4)</option>
+                                    <option value="UTC+4">Ереван (UTC+4)</option>
+                                    <option value="UTC+4">Тбилиси (UTC+4)</option>
+                                    <option value="UTC+5" selected>Алматы, Астана (UTC+5)</option>
+                                    <option value="UTC+5">Атырау, Актобе, Орал (UTC+5)</option>
+                                    <option value="UTC+5">Ташкент (UTC+5)</option>
+                                    <option value="UTC+5">Душанбе (UTC+5)</option>
+                                    <option value="UTC+5">Ашхабад (UTC+5)</option>
+                                    <option value="UTC+6">Бишкек (UTC+6)</option>
+                                    <option value="custom">Свой часовой пояс...</option>
+                                </select>
+                                <input type="text" class="admin-input" id="venueTimezoneCustom" placeholder="Напр: UTC+5:30" style="display:none; margin-top: 8px;">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                                <button type="button" class="btn btn-accent btn-sm" id="saveProfileBtn">Сохранить
+                                    изменения</button>
+                                <button type="button" class="btn btn-outline btn-sm" id="replayTutorialBtn"><i
+                                        class="ph ph-graduation-cap"></i> Повторить туториал</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Settings: Notifications (ТЗ п.8) -->
+                    <div class="dashboard-card" id="settingsNotifications" style="display:none;">
+                        <div class="card-header">
+                            <h3>Настройки уведомлений</h3>
+                        </div>
+                        <div class="settings-notif-list">
+                            <div class="settings-notif-group">
+                                <h4>Склад</h4>
+                                <label class="toggle-label"><input type="checkbox" checked><span
+                                        class="toggle-switch-ui"></span> Низкий остаток ингредиента</label>
+                                <label class="toggle-label"><input type="checkbox" checked><span
+                                        class="toggle-switch-ui"></span> Истёк срок годности</label>
+                                <label class="toggle-label"><input type="checkbox" checked><span
+                                        class="toggle-switch-ui"></span> Приближается срок годности (за 3 дня)</label>
+                                <label class="toggle-label"><input type="checkbox"><span
+                                        class="toggle-switch-ui"></span> Новая поставка принята</label>
+                            </div>
+                            <div class="settings-notif-group">
+                                <h4>Рецепты</h4>
+                                <label class="toggle-label"><input type="checkbox" checked><span
+                                        class="toggle-switch-ui"></span> Новый рецепт создан</label>
+                                <label class="toggle-label"><input type="checkbox" checked><span
+                                        class="toggle-switch-ui"></span> Рецепт отредактирован</label>
+                                <label class="toggle-label"><input type="checkbox"><span
+                                        class="toggle-switch-ui"></span> Рецепт удалён</label>
+                                <label class="toggle-label"><input type="checkbox" checked><span
+                                        class="toggle-switch-ui"></span> Фудкост превысил порог</label>
+                            </div>
+                            <div class="settings-notif-group">
+                                <h4>Команда</h4>
+                                <label class="toggle-label"><input type="checkbox" checked><span
+                                        class="toggle-switch-ui"></span> Новый сотрудник присоединился</label>
+                                <label class="toggle-label"><input type="checkbox"><span
+                                        class="toggle-switch-ui"></span> Сотрудник удалён</label>
+                                <label class="toggle-label"><input type="checkbox"><span
+                                        class="toggle-switch-ui"></span> Изменены права доступа</label>
+                            </div>
+                            <div class="settings-notif-group">
+                                <h4>Система</h4>
+                                <label class="toggle-label"><input type="checkbox" checked><span
+                                        class="toggle-switch-ui"></span> Обновления Provisio</label>
+                                <label class="toggle-label"><input type="checkbox"><span
+                                        class="toggle-switch-ui"></span> Скоро истекает подписка</label>
+                                <label class="toggle-label"><input type="checkbox"><span
+                                        class="toggle-switch-ui"></span> Email-рассылка (еженедельный отчёт)</label>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-accent btn-sm" style="margin-top: 24px;">Сохранить
+                            настройки</button>
+                    </div>
+
+                    <!-- Settings: Склад и сверка (порог расхождения) -->
+                    <div class="dashboard-card" id="settingsInventoryRules" style="display:none;">
+                        <div class="card-header">
+                            <h3>Склад и сверка</h3>
+                        </div>
+                        <p class="section-hint" style="margin-bottom: 16px;">Насколько сильно факт может отличаться от расчёта, прежде чем система подсветит это владельцу как расхождение.</p>
+                        <div class="form-group" style="max-width: 280px;">
+                            <label>Порог расхождения <span class="tooltip-trigger" data-tooltip="Если факт, который ввёл повар, отличается от расчёта системы больше, чем на этот процент — строка подсвечивается на экране «Сверка»."><i class="ph ph-question"></i></span></label>
+                            <div class="input-with-suffix">
+                                <input type="number" class="admin-input" id="varianceThresholdInput" placeholder="5" value="5" min="0" step="1">
+                                <span class="suffix-label" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--chocolate-light); font-size: 0.8125rem;">%</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-accent btn-sm" id="saveVarianceThresholdBtn" style="margin-top: 16px;">Сохранить</button>
+                    </div>
+
+                    <!-- Settings: Интеграции (self-service подключение кассы) -->
+                    <div class="dashboard-card" id="settingsIntegrations" style="display:none;">
+                        <div class="card-header">
+                            <h3>Интеграции</h3>
+                        </div>
+                        <p class="section-hint" style="margin-bottom: 20px;">Подключите кассу — и Provisio сам увидит проданные блюда и посчитает расход продуктов. Код доступа виден только вам: после сохранения Provisio его не показывает.</p>
+
+                        <div class="integration-provider-card" data-provider="frontpad">
+                            <div class="integration-provider-head">
+                                <div class="integration-provider-title"><i class="ph ph-plug"></i> <strong>Frontpad</strong></div>
+                                <span class="status-badge status-draft" id="integStatusBadge_frontpad">Не подключено</span>
+                            </div>
+                            <div class="integration-provider-body" id="integBody_frontpad">
+                                <div class="form-group">
+                                    <label>Код доступа *</label>
+                                    <div class="integration-key-input-wrap">
+                                        <input type="password" class="admin-input" id="integKeyInput_frontpad" placeholder="Вставьте код доступа из панели Frontpad">
+                                        <button type="button" class="btn-icon-inline" id="integKeyToggle_frontpad" title="Показать/скрыть"><i class="ph ph-eye"></i></button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-accent btn-sm" id="integConnectBtn_frontpad"><i class="ph ph-link"></i> Подключить</button>
+                                <div class="integration-howto">
+                                    <strong>Как подключить:</strong>
+                                    <ol>
+                                        <li>Нажмите «Подключить» — появится ссылка для Frontpad.</li>
+                                        <li>Откройте в Frontpad: Настройки → Общие → API.</li>
+                                        <li>Вставьте туда ссылку и свой код доступа Frontpad.</li>
+                                        <li>Вернитесь сюда и нажмите «Проверить подключение».</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <div class="integration-provider-connected" id="integConnected_frontpad" style="display:none;">
+                                <div class="form-group">
+                                    <label>Код доступа</label>
+                                    <input type="text" class="admin-input" id="integMaskedKey_frontpad" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Ссылка для подключения <span class="tooltip-trigger" data-tooltip="Вставьте эту ссылку в Frontpad → Настройки → Общие → API — так Provisio узнаёт, что заказ относится именно к вашему заведению."><i class="ph ph-question"></i></span></label>
+                                    <div class="integration-key-input-wrap">
+                                        <input type="text" class="admin-input" id="integWebhookUrl_frontpad" readonly>
+                                        <button type="button" class="btn-icon-inline" id="integCopyBtn_frontpad" title="Копировать"><i class="ph ph-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <button class="btn btn-outline btn-sm" id="integTestBtn_frontpad"><i class="ph ph-plug-charging"></i> Проверить подключение</button>
+                                    <button class="btn btn-sm" id="integDisconnectBtn_frontpad" style="background: rgba(231,76,60,0.1); color:#c0392b;">Отключить</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="integration-provider-card integration-provider-soon" data-provider="iiko">
+                            <div class="integration-provider-head">
+                                <div class="integration-provider-title"><i class="ph ph-plug"></i> <strong>iiko</strong></div>
+                                <span class="status-badge status-draft">Скоро</span>
+                            </div>
+                            <p class="section-hint" style="margin:0;">Появится, когда понадобится первому клиенту на iiko.</p>
+                        </div>
+
+                        <div class="dashboard-card" style="margin-top: 8px; background: var(--cream); box-shadow: none;">
+                            <div class="card-header"><h3 style="font-size: 1rem;">Загрузить продажи файлом</h3></div>
+                            <p class="section-hint">Если касса ещё не подключена — можно раз в день загрузить список проданных блюд файлом (CSV) из панели кассы. Ничего дополнительно настраивать не нужно.</p>
+                            <input type="file" accept=".csv" id="salesCsvInput" style="margin-top: 12px;">
+                            <div id="salesCsvResult" style="margin-top: 10px; font-size: 0.8125rem; color: var(--chocolate-light);"></div>
+                        </div>
+                    </div>
+
+                    <!-- Settings: Billing (ТЗ п.7) -->
+                    <div class="dashboard-card" id="settingsBilling" style="display:none;">
+                        <div class="card-header">
+                            <h3>Подписка</h3>
+                        </div>
+                        <div class="billing-info">
+                            <div class="billing-plan-card">
+                                <div class="billing-plan-badge">Активна</div>
+                                <h4>Профессиональный</h4>
+                                <div class="billing-price"><span class="billing-amount">$4,990</span><span
+                                        class="billing-period">/ мес</span></div>
+                                <p>Полный функционал для ресторана с несколькими точками.</p>
+                            </div>
+                            <div class="billing-subscription-info">
+                                <div class="billing-days-left">
+                                    <div class="billing-days-circle" id="billingDaysCircle">
+                                        <svg viewBox="0 0 100 100">
+                                            <circle cx="50" cy="50" r="45" class="billing-circle-bg" />
+                                            <circle cx="50" cy="50" r="45" class="billing-circle-fill"
+                                                id="billingCircleFill" />
+                                        </svg>
+                                        <div class="billing-days-text">
+                                            <span class="billing-days-num" id="billingDaysNum">23</span>
+                                            <span class="billing-days-label">дня</span>
+                                        </div>
+                                    </div>
+                                    <p>До окончания подписки</p>
+                                </div>
+                                <div class="billing-details">
+                                    <div class="billing-detail-row"><span>Дата начала:</span><strong>11 марта
+                                            2026</strong></div>
+                                    <div class="billing-detail-row"><span>Следующее списание:</span><strong>11 мая
+                                            2026</strong></div>
+                                    <div class="billing-detail-row"><span>Способ оплаты:</span><strong>Visa ••••
+                                            4242</strong></div>
+                                </div>
+                            </div>
+                            <div class="billing-actions">
+                                <a href="pricing.html" class="btn btn-outline btn-sm">Сменить план</a>
+                                <button class="btn btn-sm"
+                                    style="background: rgba(231,76,60,0.1); color: #c0392b;">Отменить подписку</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ========== MODALS ========== -->
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <!-- ===== ONBOARDING: Welcome Modal ===== -->
+    <div class="modal modal-sm tutorial-modal" id="tutorialWelcomeModal">
+        <button class="modal-close tutorial-hero-close" id="tutorialWelcomeClose"><i class="ph ph-x"></i></button>
+        <div class="tutorial-hero">
+            <img src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&q=80&w=1200" alt="Ресторанная кухня" class="tutorial-hero-image">
+            <div class="tutorial-hero-overlay"></div>
+            <div class="tutorial-hero-content">
+                <span class="tutorial-hero-logo">Provisio<span class="logo-dot">.</span></span>
+            </div>
+        </div>
+        <div class="modal-body tutorial-body">
+            <h3 class="tutorial-title">Добро пожаловать в Provisio</h3>
+            <p class="tutorial-text">Provisio помогает считать себестоимость блюд, маржу и закуп для вашего заведения — без таблиц и ручного калькулятора. Давайте за минуту покажем, как всё устроено.</p>
+            <blockquote class="tutorial-quote"><p>«Меньше рутины — больше прибыли.»</p></blockquote>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="tutorialSkipBtn">Пропустить</button>
+            <button class="btn btn-accent btn-sm" id="tutorialStartBtn"><i class="ph ph-play-circle"></i> Начать</button>
+        </div>
+    </div>
+
+    <!-- ===== ONBOARDING: Final Modal ===== -->
+    <div class="modal modal-sm tutorial-modal" id="tutorialFinalModal">
+        <button class="modal-close tutorial-hero-close" id="tutorialFinalClose"><i class="ph ph-x"></i></button>
+        <div class="tutorial-hero">
+            <img src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&q=80&w=1200" alt="Ресторанная кухня" class="tutorial-hero-image">
+            <div class="tutorial-hero-overlay"></div>
+            <div class="tutorial-hero-content tutorial-hero-content-center">
+                <div class="tutorial-hero-badge"><i class="ph ph-check-circle"></i></div>
+            </div>
+        </div>
+        <div class="modal-body tutorial-body">
+            <h3 class="tutorial-title">Готово!</h3>
+            <p class="tutorial-text">Теперь система сама считает вашу маржу и закуп. Можно начинать работать.</p>
+            <blockquote class="tutorial-quote"><p>«Теперь цифры работают на тебя.»</p></blockquote>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-accent btn-sm" id="tutorialFinishBtn"><i class="ph ph-check-circle"></i> Понятно</button>
+        </div>
+    </div>
+
+    <!-- ===== ONBOARDING: Guided Tour Coach-mark ===== -->
+    <div class="tour-backdrop" id="tourBackdrop"></div>
+    <div class="tour-tooltip" id="tourTooltip">
+        <div class="tour-tooltip-head">
+            <div class="tour-tooltip-icon"><i id="tourStepIcon" class="ph"></i></div>
+            <div class="tour-tooltip-step" id="tourStepCounter"></div>
+        </div>
+        <div class="tour-tooltip-text" id="tourStepText"></div>
+        <div class="tour-progress"><div class="tour-progress-fill" id="tourProgressFill"></div></div>
+        <div class="tour-tooltip-actions">
+            <button class="btn btn-ghost btn-sm" id="tourSkipBtn">Пропустить</button>
+            <button class="btn btn-accent btn-sm" id="tourNextBtn">Далее</button>
+        </div>
+    </div>
+
+    <!-- Create/Edit Recipe Modal (ТЗ п.2) -->
+    <div class="modal" id="recipeModal">
+        <div class="modal-header">
+            <h3 id="recipeModalTitle">Создать рецепт</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn btn-outline btn-sm" id="recipeScaleBtn" style="display: none;"><i class="ph ph-scales"></i> Масштаб</button>
+                <button class="modal-close" id="recipeModalClose"><i class="ph ph-x"></i></button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Название блюда/заготовки *</label>
+                    <input type="text" class="admin-input" id="modalRecipeName" placeholder="Например: Паста Карбонара">
+                </div>
+                <div class="form-group">
+                    <label>Категория *</label>
+                    <select class="admin-input" id="modalRecipeCategory">
+                        <option value="">Выберите категорию</option>
+                        <option value="hot">Горячие</option>
+                        <option value="salads">Салаты</option>
+                        <option value="desserts">Десерты</option>
+                        <option value="soups">Супы</option>
+                        <option value="drinks">Напитки</option>
+                        <option value="prep">Заготовка (Подрецепт)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Выход * <span class="tooltip-trigger" data-tooltip="Сколько порций или какой вес получается из этого рецепта."><i class="ph ph-question"></i></span></label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" class="admin-input" id="modalRecipeYieldQty" placeholder="1" value="1" style="width: 50%;">
+                        <select class="admin-input" id="modalRecipeYieldUnit" style="width: 50%;">
+                            <option value="порция">порция</option>
+                            <option value="кг">кг</option>
+                            <option value="г">г</option>
+                            <option value="л">л</option>
+                            <option value="шт">шт</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Общий вес (г)</label>
+                    <input type="number" class="admin-input" id="modalRecipeWeight" placeholder="0" readonly style="background: var(--surface-hover);">
+                </div>
+            </div>
+
+            <h4 class="calc-section-title">Трудозатраты</h4>
+            <div class="modal-labor-list" id="modalLaborList">
+                <!-- Rendered by JS -->
+            </div>
+            <button class="btn btn-outline btn-sm" id="modalAddLaborBtn" style="margin-top: 12px; margin-bottom: 24px;"><i class="ph ph-plus"></i> Добавить сотрудника</button>
+
+            <h4 class="calc-section-title">Ингредиенты и Подрецепты</h4>
+            <div class="modal-ingredient-list" id="modalIngredientList">
+                <!-- Rendered by JS -->
+            </div>
+            <button class="btn btn-outline btn-sm" id="modalAddIngredientBtn" style="margin-top: 12px;"><i class="ph ph-plus"></i> Добавить компонент</button>
+
+            <div class="modal-recipe-result">
+                <div class="modal-cost-summary">
+                    <div class="calc-row"><span>Себестоимость:</span><strong id="modalCostValue">$0.00</strong></div>
+                    <div class="calc-row calc-row-accent"><span>Фудкост <span class="tooltip-trigger" data-tooltip="Доля себестоимости в цене продажи. Здоровый показатель — 25–35%. Чем выше — тем меньше вы зарабатываете на блюде."><i class="ph ph-question"></i></span>:</span><strong
+                            id="modalFoodcostValue">0%</strong></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="recipeModalCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="recipeModalSave">Сохранить рецепт</button>
+        </div>
+    </div>
+
+    <!-- Add/Edit Inventory Modal (Склад) -->
+    <div class="modal" id="inventoryModal">
+        <div class="modal-header">
+            <h3 id="inventoryModalTitle">Добавить товар</h3>
+            <button class="modal-close" id="inventoryModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Название ингредиента *</label>
+                    <select class="admin-input" id="modalInvName"></select>
+                </div>
+                <div class="form-group">
+                    <label>Категория *</label>
+                    <select class="admin-input" id="modalInvCategory"></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Количество *</label>
+                    <input type="number" class="admin-input" id="modalInvQty" placeholder="5" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Единица измерения *</label>
+                    <select class="admin-input" id="modalInvUnit">
+                        <option>кг</option><option>г</option><option>л</option><option>мл</option>
+                        <option>шт</option><option>стакан</option><option>щепотка</option>
+                        <option>пучок</option><option>зубчик</option><option>упаковка</option>
+                        <option>банка</option><option>бутылка</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Мин. запас *</label>
+                    <input type="number" class="admin-input" id="modalInvMinStock" placeholder="3" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Цена за единицу *</label>
+                    <input type="number" class="admin-input" id="modalInvPrice" placeholder="8.90" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Срок годности <span class="optional-label">(необязательно)</span></label>
+                <input type="date" class="admin-input" id="modalInvExpiry">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="inventoryModalCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="inventoryModalSave">Сохранить</button>
+        </div>
+    </div>
+
+    <!-- Ingredient Detail Modal (Phase 2) -->
+    <div class="modal" id="ingredientModal">
+        <div class="modal-header">
+            <h3 id="ingredientModalTitle">Карточка ингредиента</h3>
+            <button class="modal-close" id="ingredientModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-tabs">
+            <button class="modal-tab active" data-modaltab="ing-general">Общее</button>
+            <button class="modal-tab" data-modaltab="ing-nutrition">КБЖУ</button>
+            <button class="modal-tab" data-modaltab="ing-conversions">Конвертация (Ед. изм.) <span class="tooltip-trigger" data-tooltip="Здесь можно задать пересчёт между единицами — напр. 1 стакан = 250 мл — чтобы система понимала рецепты в любых единицах." style="vertical-align: middle;"><i class="ph ph-question"></i></span></button>
+        </div>
+        <div class="modal-body">
+            <!-- Tab: General -->
+            <div class="modal-tab-content active" id="modalTabIngGeneral">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Название ингредиента *</label>
+                        <input type="text" class="admin-input" id="ingName" placeholder="Напр: Сливки 33%">
+                    </div>
+                    <div class="form-group">
+                        <label>Категория</label>
+                        <select class="admin-input" id="ingCategory">
+                            <!-- Options will be copied from inventory filter by JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Базовая единица измерения * <span class="tooltip-trigger" data-tooltip="Основная единица, в которой вы считаете этот ингредиент: вес (кг/г) или объём (л/мл)."><i class="ph ph-question"></i></span></label>
+                        <select class="admin-input" id="ingBaseUnit">
+                            <option value="кг">кг (вес)</option>
+                            <option value="л">л (объем)</option>
+                            <option value="шт">шт (штуки)</option>
+                            <option value="г">г (вес)</option>
+                            <option value="мл">мл (объем)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>EP% (Съедобная часть) <span class="tooltip-trigger" data-tooltip="Сколько процентов продукта идёт в блюдо после очистки. Напр. у креветок после чистки остаётся ~70%, значит EP = 70%. Для продуктов без отхода — 100%."><i class="ph ph-question"></i></span></label>
+                        <div class="input-with-suffix">
+                            <input type="number" class="admin-input" id="ingEpPercent" placeholder="100" value="100">
+                            <span class="suffix-label" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--chocolate-light); font-size: 0.8125rem;">%</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Плотность (кг/л) <span class="tooltip-trigger" data-tooltip="Нужна, чтобы переводить объём в вес (литры в килограммы). Для воды и похожих жидкостей = 1. Меняйте только если знаете точное значение."><i class="ph ph-question"></i></span></label>
+                        <input type="number" class="admin-input" id="ingDensity" placeholder="1.0" step="0.001" value="1.0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Nutrition -->
+            <div class="modal-tab-content" id="modalTabIngNutrition" style="display: none;">
+                <div class="nutrition-grid-edit" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Энергия (Ккал / 100г)</label>
+                        <input type="number" class="admin-input" id="ingKcal" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Белки (г / 100г)</label>
+                        <input type="number" class="admin-input" id="ingProtein" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Жиры (г / 100г)</label>
+                        <input type="number" class="admin-input" id="ingFat" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Углеводы (г / 100г)</label>
+                        <input type="number" class="admin-input" id="ingCarbs" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Conversions -->
+            <div class="modal-tab-content" id="modalTabIngConversions" style="display: none;">
+                <p class="section-hint" style="font-size: 0.75rem; color: var(--chocolate-light); margin-bottom: 12px;">Задайте правила пересчета для этого ингредиента (напр. 1 стакан = 240г)</p>
+                <div class="conversions-list" id="ingConversionsList">
+                    <!-- Rendered by JS -->
+                </div>
+                <button class="btn btn-outline btn-sm" id="ingAddConversionBtn" style="margin-top: 12px;">
+                    <i class="ph ph-plus"></i> Добавить правило
+                </button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="ingModalCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="ingModalSave">Сохранить данные</button>
+        </div>
+    </div>
+
+    <!-- Invite Team Modal (ТЗ п.6) -->
+    <div class="modal modal-sm" id="inviteModal">
+        <div class="modal-header">
+            <h3>Пригласить сотрудника</h3>
+            <button class="modal-close" id="inviteModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Должность *</label>
+                <select class="admin-input" id="inviteRole">
+                    <option value="">Выберите должность</option>
+                    <option value="chef">Шеф-повар</option>
+                    <option value="souschef">Су-шеф</option>
+                    <option value="cook">Повар</option>
+                    <option value="manager">Управляющий</option>
+                    <option value="accountant">Бухгалтер</option>
+                    <option value="confectioner">Кондитер</option>
+                </select>
+            </div>
+            <div class="invite-link-result" id="inviteLinkResult" style="display:none;">
+                <label>Одноразовая ссылка-приглашение:</label>
+                <div class="invite-link-box">
+                    <input type="text" class="admin-input" id="inviteLinkValue" readonly>
+                    <button class="btn-icon-inline" id="copyInviteLink" title="Копировать"><i
+                            class="ph ph-copy"></i></button>
+                </div>
+                <p class="invite-link-note"><i class="ph ph-info"></i> Ссылка одноразовая и действует 48 часов.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="inviteModalCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="generateInviteBtn">Сгенерировать ссылку</button>
+        </div>
+    </div>
+
+    <!-- Edit Categories Modal (ТЗ п.5) -->
+    <div class="modal modal-sm" id="categoriesModal">
+        <div class="modal-header">
+            <h3>Редактировать категории</h3>
+            <button class="modal-close" id="categoriesModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="editable-categories-list" id="editableCategoriesList">
+                <!-- Rendered by JS -->
+            </div>
+            <div class="form-group" style="margin-top: 16px;">
+                <div class="add-category-row">
+                    <input type="text" class="admin-input" id="newCategoryInput" placeholder="Новая категория...">
+                    <button class="btn btn-accent btn-sm" id="addCategoryBtn"><i class="ph ph-plus"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-accent btn-sm" id="categoriesModalSave">Готово</button>
+        </div>
+    </div>
+
+    <!-- Create Supplier Modal -->
+    <div class="modal modal-sm" id="createSupplierModal">
+        <div class="modal-header">
+            <h3>Создать поставщика</h3>
+            <button class="modal-close" id="createSupplierModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Имя поставщика *</label>
+                <input type="text" class="admin-input" id="newSupplierName" placeholder="Например: ООО Мясоторг">
+            </div>
+            <div class="form-group" style="margin-top: 16px;">
+                <label>Комментарий / Примечание</label>
+                <textarea class="admin-input" id="newSupplierNotes" placeholder="Напр: Контакты, условия оплаты..." style="height: 80px;"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="createSupplierCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="createSupplierSave">Создать</button>
+        </div>
+    </div>
+
+    <!-- Add Schedule Modal Removed -->
+
+    <!-- Add Supplier Price Modal -->
+    <div class="modal" id="addSupplierPriceModal">
+        <div class="modal-header">
+            <h3 id="supplierPriceModalTitle">Добавить в ассортимент</h3>
+            <button class="modal-close" id="addSupplierPriceModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Ингредиент *</label>
+                <select class="admin-input" id="supplierPriceIngredient">
+                    <!-- Loaded dynamically -->
+                </select>
+            </div>
+            <h4 class="calc-section-title" style="margin-top: 16px; font-size: 0.9rem; color: var(--chocolate);">Цена за фасовку</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена *</label>
+                    <div class="input-with-currency">
+                        <input type="number" class="admin-input" id="supplierPriceValue" placeholder="10.00" step="0.01">
+                        <span class="currency-label supplier-price-currency">${AppStore.currency}</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Объем / Фасовка *</label>
+                    <input type="number" class="admin-input" id="supplierPriceQty" placeholder="1" value="1" step="0.1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Единица измерения *</label>
+                <select class="admin-input" id="supplierPriceUnit">
+                    <option>г</option><option>кг</option><option>мл</option><option>л</option><option>шт</option><option>коробка</option><option>ящик</option><option>упаковка</option><option>банка</option><option>бутылка</option><option>пучок</option>
+                </select>
+            </div>
+
+            <h4 class="calc-section-title" style="margin-top: 16px; font-size: 0.9rem; color: var(--chocolate);">Условия поставки (необязательно)</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Периодичность</label>
+                    <select class="admin-input" id="supplierPriceFreq">
+                        <option value="">Без доставки</option>
+                        <option value="daily">Каждый день</option>
+                        <option value="every_2_days">Каждые 2 дня</option>
+                        <option value="every_3_days">Каждые 3 дня</option>
+                        <option value="weekly">Раз в неделю</option>
+                        <option value="monthly">Раз в месяц</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="supplierPriceDayLabel">День недели</label>
+                    <select class="admin-input" id="supplierPriceDay">
+                        <option value="1">Понедельник</option>
+                        <option value="2">Вторник</option>
+                        <option value="3">Среда</option>
+                        <option value="4">Четверг</option>
+                        <option value="5">Пятница</option>
+                        <option value="6">Суббота</option>
+                        <option value="0">Воскресенье</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Объем поставки (в тех же ед.)</label>
+                <input type="number" class="admin-input" id="supplierPriceDelQty" placeholder="10" step="0.1">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="addSupplierPriceCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="addSupplierPriceSave">Сохранить</button>
+        </div>
+    </div>
+
+    <!-- Supplier Filter by Groups Modal -->
+    <div class="modal modal-sm" id="supplierFilterModal">
+        <div class="modal-header">
+            <h3>Фильтр по группам</h3>
+            <button class="modal-close" id="supplierFilterModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="search-box" style="margin-bottom: 16px;">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" placeholder="Поиск группы..." id="supplierFilterSearch">
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button class="btn btn-outline btn-sm" id="supplierFilterSelectAll" style="font-size: 0.75rem;">Выбрать
+                    все</button>
+                <button class="btn btn-outline btn-sm" id="supplierFilterDeselectAll" style="font-size: 0.75rem;">Снять
+                    все</button>
+            </div>
+            <div class="supplier-filter-groups-list" id="supplierFilterGroupsList">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="supplierFilterCancel">Отмена</button>
+            <button class="btn btn-accent btn-sm" id="supplierFilterApply">Применить</button>
+        </div>
+    </div>
+
+    <!-- Supplier Add to Groups Modal -->
+    <div class="modal modal-sm" id="addSupplierGroupModal">
+        <div class="modal-header">
+            <h3>Добавить в группы</h3>
+            <button class="modal-close" id="addSupplierGroupModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="supplier-filter-groups-list" id="addGroupCheckboxList">
+                <!-- Rendered by JS -->
+            </div>
+            <div style="margin-top: 16px; display: flex; gap: 8px;">
+                <input type="text" class="admin-input" id="newGroupName" placeholder="Новая группа...">
+                <button class="btn btn-outline btn-sm" id="createNewGroupBtn"
+                    style="white-space: nowrap;">Создать</button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="addSupplierGroupCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="addSupplierGroupSave">Сохранить</button>
+        </div>
+    </div>
+
+    <!-- Delivery Schedule Modal Removed -->
+
+    <!-- Delivery Confirmation Modal -->
+    <div class="modal modal-sm" id="deliveryConfirmModal">
+        <div class="modal-header">
+            <h3>Подтвердить поступление</h3>
+            <button class="modal-close" id="deliveryConfirmModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 16px; color: var(--chocolate-light);">Подтвердите получение ингредиента. Количество
+                будет добавлено к остаткам на складе.</p>
+            <div class="form-group">
+                <label>Ингредиент</label>
+                <input type="text" class="admin-input" id="confirmDeliveryName" readonly>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Полученное кол-во *</label>
+                    <input type="number" class="admin-input" id="confirmDeliveryQty" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Единица</label>
+                    <input type="text" class="admin-input" id="confirmDeliveryUnit" readonly>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Поставщик</label>
+                <input type="text" class="admin-input" id="confirmDeliverySupplier" readonly>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="deliveryConfirmCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="deliveryConfirmSave"><i class="ph ph-check"></i>
+                Подтвердить</button>
+        </div>
+    </div>
+
+    <!-- Menu Item Modal -->
+    <div class="modal modal-sm" id="menuItemModal">
+        <div class="modal-header">
+            <h3 id="menuItemModalTitle">Добавить пункт меню</h3>
+            <button class="modal-close" id="menuItemModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Название пункта меню *</label>
+                <input type="text" class="admin-input" id="modalMenuName" placeholder="Паста Карбонара">
+            </div>
+            <div class="form-group">
+                <label>Рецепт *</label>
+                <select class="admin-input" id="modalMenuRecipe">
+                    <!-- Заполняется JS -->
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Категория</label>
+                    <input type="text" class="admin-input" id="modalMenuCategory" placeholder="Горячие">
+                </div>
+                <div class="form-group">
+                    <label>Цена продажи *</label>
+                    <input type="number" class="admin-input" id="modalMenuPrice" placeholder="50.00" step="0.01">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="menuItemModalCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="menuItemModalSave">Сохранить</button>
+        </div>
+    </div>
+
+    <!-- Purchase Order Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-header">
+            <h3 id="orderModalTitle">Создать заказ</h3>
+            <button class="modal-close" id="orderModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Поставщик *</label>
+                    <select class="admin-input" id="modalOrderSupplier">
+                        <!-- Заполняется JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Статус *</label>
+                    <select class="admin-input" id="modalOrderStatus">
+                        <option value="draft">Черновик</option>
+                        <option value="sent">Отправлен</option>
+                        <option value="received">Получен</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Позиции -->
+            <h4 class="calc-section-title">Позиции заказа</h4>
+            <div class="ingredient-list" id="modalOrderItemsList">
+                <!-- Rendered by JS -->
+            </div>
+            <button class="btn btn-outline btn-sm" id="modalAddOrderItemBtn" style="margin-top: 16px;"><i class="ph ph-plus"></i> Добавить позицию</button>
+            
+            <div class="form-group" style="margin-top: 24px;">
+                <label>Итоговая сумма: <span id="modalOrderTotal" style="font-weight: 700;">$0.00</span></label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="orderModalCancel">Отменить</button>
+            <button class="btn btn-accent btn-sm" id="orderModalSave">Сохранить</button>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal modal-sm" id="confirmModal">
+        <div class="modal-header">
+            <h3 id="confirmModalTitle">Подтверждение</h3>
+            <button class="modal-close" id="confirmModalClose"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <p id="confirmModalText">Вы уверены, что хотите удалить этот элемент?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline btn-sm" id="confirmModalCancel">Отменить</button>
+            <button class="btn btn-sm" id="confirmModalOk" style="background: #e74c3c; color: #fff;">Удалить</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/admin/admin-db.js?v=6"></script>
+    <script src="js/admin/admin-core.js?v=6"></script>
+    <script src="js/admin/admin-ui.js?v=6"></script>
+    <script src="js/admin/admin-reactive.js?v=6"></script>
+    <script src="js/admin/admin-dashboard.js?v=6"></script>
+    <script src="js/admin/admin-recipes.js?v=6"></script>
+    <script src="js/admin/admin-inventory.js?v=7"></script>
+    <!-- PHASE 2 scripts archived — do not restore without moving files back from /archive/js/admin/ -->
+    <!-- <script src="js/admin/admin-orders.js?v=6"></script> -->
+    <!-- <script src="js/admin/admin-team.js?v=6"></script> -->
+    <script src="js/admin/admin-suppliers.js?v=6"></script>
+    <script src="js/admin/admin-ingredients.js?v=6"></script>
+    <script src="js/admin/admin-menu.js?v=6"></script>
+    <script src="js/admin/admin-settings.js?v=6"></script>
+    <script src="js/admin/admin-integrations.js?v=1"></script>
+    <script src="js/admin/admin-calculator.js?v=6"></script>
+    <script src="js/admin/admin-purchasing.js?v=6"></script>
+    <script src="js/admin/admin-tutorial.js?v=6"></script>
+    <div id="debugWindow" class="debug-window" data-no-i18n>
+        <div class="debug-window-header" id="debugHeader">
+            <span class="debug-title">Provisio Control Center</span>
+            <span id="debugTime" style="margin-left: auto; margin-right: 15px; font-family: monospace; color: #adb5bd; font-size: 13px;">00:00:00</span>
+            <i class="ph ph-command" style="color: #4dabf7;"></i>
+        </div>
+        <div class="debug-tabs">
+            <button class="debug-tab-btn active" onclick="switchDebugTab('stats')">Стат</button>
+            <button class="debug-tab-btn" onclick="switchDebugTab('ctrl')">Упр</button>
+            <button class="debug-tab-btn" onclick="switchDebugTab('err')">Ошибки</button>
+            <button class="debug-tab-btn" onclick="switchDebugTab('todo')">Задачи</button>
+        </div>
+        <div class="debug-body">
+            <!-- Tab: Stats -->
+            <div id="debugTab-stats" class="debug-tab-content active">
+                <div class="debug-stat"><span>Поставщики:</span><span class="debug-stat-val" id="debugSuppliersCount">0</span></div>
+                <div class="debug-stat"><span>Venue ID:</span><span class="debug-stat-val" id="debugVenueId">---</span></div>
+                <div class="debug-stat"><span>Last API:</span><span class="debug-stat-val" id="debugLastApi">---</span></div>
+            </div>
+            <!-- Tab: Controls -->
+            <div id="debugTab-ctrl" class="debug-tab-content">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Theme Selector (Segmented) -->
+                    <div class="debug-control-group">
+                        <div class="control-label">Внешний вид</div>
+                        <div class="segmented-control theme-selector">
+                            <button id="segThemeLight" class="seg-btn" onclick="window.Provisio.AppStore.setTheme('light')">День</button>
+                            <button id="segThemeDark" class="seg-btn" onclick="window.Provisio.AppStore.setTheme('dark')">Ночь</button>
+                            <div class="segmented-bg"></div>
+                        </div>
+                    </div>
+
+                    <!-- Effects Selector (Segmented) - Phase 9 -->
+                    <div class="debug-control-group">
+                        <div class="control-label">Графический движок</div>
+                        <div class="segmented-control effects-selector">
+                            <button id="segEffectNormal" class="seg-btn" onclick="window.Provisio.AppStore.setEffects('normal')">Аним</button>
+                            <button id="segEffectDim" class="seg-btn" onclick="window.Provisio.AppStore.setEffects('dim')">Мрак</button>
+                            <button id="segEffectClean" class="seg-btn" onclick="window.Provisio.AppStore.setEffects('clean')">Чисто</button>
+                            <div class="segmented-bg"></div>
+                        </div>
+                    </div>
+
+                    <!-- Palette Selector (Segmented) - Phase 9 -->
+                    <div class="debug-control-group">
+                        <div class="control-label">Цветовая палитра</div>
+                        <div class="segmented-control palette-selector" style="margin-bottom: 4px;">
+                            <button id="segPalClassic" class="seg-btn" onclick="window.Provisio.AppStore.setPalette('classic')">Шоколад</button>
+                            <button id="segPalEmerald" class="seg-btn" onclick="window.Provisio.AppStore.setPalette('emerald')">Изумруд</button>
+                            <button id="segPalRuby" class="seg-btn" onclick="window.Provisio.AppStore.setPalette('ruby')">Рубин</button>
+                            <button id="segPalAzure" class="seg-btn" onclick="window.Provisio.AppStore.setPalette('azure')">Лазурь</button>
+                            <div class="segmented-bg"></div>
+                        </div>
+                    </div>
+
+                    <!-- RESET DATA (Phase 15) -->
+                    <div style="margin-top: 5px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div class="control-label" style="color: #ff8787; margin-bottom: 4px;">Системный кеш</div>
+                        <button class="btn btn-sm" onclick="window.Provisio.resetLocalData()" style="width: 100%; padding: 8px; background: rgba(255,107,107,0.15); color: #ff8787; border: 1px solid rgba(255,107,107,0.3); font-size: 10px; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="ph ph-trash"></i> Сбросить локальные данные
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Tab: Errors -->
+            <div id="debugTab-err" class="debug-tab-content">
+                <div class="debug-log" id="debugLog" style="height: 120px;">No errors today...</div>
+            </div>
+            <!-- Tab: Roadmap -->
+            <div id="debugTab-todo" class="debug-tab-content">
+                <div style="font-size: 11px; line-height: 1.6; color: #a5d8ff;">
+                    <div>• Интеграция AmoCRM (Lead Sync)</div>
+                    <div>• Автоматический заказ поставщикам</div>
+                    <div>• AI Генератор меню (BETA)</div>
+                    <div>• Мобильное приложение (PWA)</div>
+                </div>
+            </div>
+        </div>
+        <script>
+            function switchDebugTab(tabId) {
+                document.querySelectorAll('.debug-tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.debug-tab-btn').forEach(el => el.classList.remove('active'));
+                document.getElementById('debugTab-' + tabId).classList.add('active');
+                event.currentTarget.classList.add('active');
+            }
+        </script>
+        <style>
+            .debug-tab-btn { flex: 1; border: none; background: none; color: #888; padding: 8px; cursor: pointer; font-size: 10px; text-transform: uppercase; font-weight: 700; transition: all 0.2s; }
+            .debug-tab-btn.active { color: #4dabf7; background: rgba(255,255,255,0.05); }
+            .debug-tab-content { display: none; padding-top: 5px; }
+            .debug-tab-content.active { display: block; }
+
+            /* Segmented Control Styles */
+            .debug-control-group { display: flex; flex-direction: column; gap: 6px; }
+            .control-label { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+            .segmented-control { 
+                display: flex; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 2px; 
+                position: relative; overflow: hidden; gap: 1px; border: 1px solid rgba(255,255,255,0.08);
+                backdrop-filter: blur(5px);
+            }
+            .segmented-bg { 
+                position: absolute; top: 2px; bottom: 2px; left: 2px; 
+                background: rgba(77, 171, 247, 0.4); border: 1px solid rgba(77, 171, 247, 0.6); 
+                border-radius: 8px; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); z-index: 1;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            }
+            .seg-btn { 
+                flex: 1; border: none; background: none; color: #888; font-size: 10px; 
+                font-weight: 700; padding: 10px; cursor: pointer; position: relative; z-index: 2; 
+                transition: color 0.3s;
+            }
+            .seg-btn.active { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+
+            /* Fixed Sibling Selectors (Targeting the bg AFTER buttons) */
+            .theme-selector .segmented-bg { width: calc(50% - 2px); }
+            .theme-selector #segThemeDark.active ~ .segmented-bg { transform: translateX(100%); }
+            
+            .effects-selector .segmented-bg { width: calc(33.33% - 2px); }
+            .effects-selector #segEffectDim.active ~ .segmented-bg { transform: translateX(100%); }
+            .effects-selector #segEffectClean.active ~ .segmented-bg { transform: translateX(200%); }
+
+            .palette-selector .segmented-bg { width: calc(25% - 2px); }
+            .palette-selector #segPalEmerald.active ~ .segmented-bg { transform: translateX(100%); }
+            .palette-selector #segPalRuby.active ~ .segmented-bg { transform: translateX(200%); }
+            .palette-selector #segPalAzure.active ~ .segmented-bg { transform: translateX(300%); }
+
+            .debug-log-entry { margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
+            .log-error { color: #ff6b6b; }
+            .log-warning { color: #fcc419; }
+            .log-info { color: #4dabf7; }
+        </style>
+    </div>
+</body>
+
+</html>
