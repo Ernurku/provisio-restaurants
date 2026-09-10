@@ -3,3 +3,4 @@
 .env*.local
 node_modules
 .claude/settings.local.json
+js/supabase-config.js
